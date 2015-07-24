@@ -77,8 +77,8 @@ function MainScene:initSence()
 	local title = cc.ui.UILabel.new({text="冒险小镇",size=30,color=display.COLOR_WHITE}):align(display.CENTER, display.cx, display.top - 40):addTo(self.layer)
 	title:setOpacity(0)
 	title:fadeIn(1)
-	self.layer:setTouchEnabled(true)
-	self.layer:addNodeEventListener(cc.NODE_TOUCH_EVENT, function(event)
+	self:setTouchEnabled(true)
+	self:addNodeEventListener(cc.NODE_TOUCH_EVENT, function(event)
         -- event.name 是触摸事件的状态：began, moved, ended, cancelled
         -- event.x, event.y 是触摸点当前位置
         -- event.prevX, event.prevY 是触摸点之前的位置
