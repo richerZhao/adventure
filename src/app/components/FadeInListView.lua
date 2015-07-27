@@ -20,7 +20,7 @@ local FadeInListVeiw = class("FadeInListVeiw", cc.ui.UIListView)
 
 -- end --
 
-function FadeInListVeiw:addItemFront(listItem)
+function FadeInListVeiw:addItemFront(listItem,isFadeIn)
 	self:modifyItemSizeIf_(listItem)
 	for i=#self.items_,1,-1 do
 		self.items_[i + 1] = self.items_[i]	
@@ -28,7 +28,7 @@ function FadeInListVeiw:addItemFront(listItem)
 	
 	self.items_[1] = listItem
 	self.container:addChild(listItem)
-	self:reload(true)
+	self:reload(isFadeIn)
 	return self
 end
 
@@ -46,7 +46,6 @@ function FadeInListVeiw:reload(lastFadeIn)
 	self:layout_(lastFadeIn)
 	return self
 end
-
 
 -- start --
 
@@ -110,9 +109,6 @@ function FadeInListVeiw:layout_(lastFadeIn)
 			v:moveTo(1, self.viewRect_.x,
 				self.viewRect_.y + tempHeight)
 		end
-		
-
-		
 	end
 	self.container:setPosition(0, self.viewRect_.height - self.size.height)
 end

@@ -9,7 +9,7 @@ function addListViewContentWithAction(text,listview)
         dimensions = cc.size(display.width - 20, 0)})
 	item:addContent(content)
 	item:setItemSize(display.width - 20, (display.height / 4) / 6 )
-	listview:addItemFront(item)
+	listview:addItemFront(item,true)
 	if not GameData.showLabelStrings then
 		GameData.showLabelStrings = {}
 	end
@@ -26,5 +26,5 @@ function addListViewContent(text,listview)
         dimensions = cc.size(display.width - 20, 0)})
 	item:addContent(content)
 	item:setItemSize(display.width - 20, (display.height / 4) / 6 )
-	listview:addItem(item)
+	listview:addItemFront(item)
 end

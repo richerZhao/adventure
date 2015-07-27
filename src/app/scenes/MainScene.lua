@@ -6,9 +6,11 @@ end)
 local FadeInListView = require("app.components.FadeInListView")
 
 function MainScene:ctor()
+	print("MainScene:ctor()")
 end
 
 function MainScene:onEnter()
+	print("MainScene:onEnter()")
 	self.layer = cc.LayerColor:create(cc.c4b(0,0,0,255),display.width,display.height):pos(0, 0):addTo(self)
     self.contentList = FadeInListView.new {
 	        bgScale9 = true,
@@ -31,7 +33,7 @@ function MainScene:onEnter()
 end
 
 function MainScene:onExit()
-
+	print("MainScene:onExit()")
 end
 
 function MainScene:touchListener(event)
@@ -68,7 +70,7 @@ function MainScene:initSence()
 		:setButtonSize(120, 60)
 		:setButtonLabel("normal", cc.ui.UILabel.new({text="公会大厅",size=20,color=display.COLOR_BLACK}))
 		:onButtonClicked(function()
-			app:enterScene("LeftScene")
+			app:enterScene("WorldScene")
 			end)
 		:align(display.CENTER, 100 , display.top - 160)
 		:addTo(self.layer)
