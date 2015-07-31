@@ -28,7 +28,7 @@ function Npc:ctor(params)
 	end
 
 	self.openTable_ = {}
-	self.opencloseTable_ = {}
+	self.closeTable_ = {}
 
 end
 
@@ -93,45 +93,81 @@ function Npc:moveToward(targetPos)
 		return
 	end
 
-	local targerNode = cc.p(targetTiledX,targetTiledY)
+	local targetNode = cc.p(selfTiledX,selfTiledY)
+	local selfNode = cc.p(selfTiledX,selfTiledY)
+	-- local selfNode = cc.p(targetTiledX,targetTiledY)
+
+	dump(targetNode, "targetNode", targetNode)
+	dump(selfNode, "selfNode", selfNode)
+	dump(self.openTable_, "self.openTable_", self.openTable_)
+	dump(self.closeTable_, "self.openTable_", self.closeTable_)
 	--检查终点是否可以到达
-	if not self:canReach(targerNode) then
+	if not self:canReach(targetNode) then
 		print("hit wall")
 		return
 	end
-	table.insert(self.openTable_, {x=selfTiledX,y=selfTiledY,g=0,h=0,f=0})
+	table.insert(self.openTable_, {x=targetTiledX,y=targetTiledY,g=0,h=0,f=0})
+	-- table.insert(self.openTable_, {x=selfTiledX,y=targetTiledY,g=0,h=0,f=0})
 	local currentNode = table.remove(self.openTable_,1)
+	-- dump(currentNode, "currentNode", currentNode)
 	table.insert(self.closeTable_, currentNode)
 	local canReachTiles = self:getCanReachTiles(currentNode)
+	-- dump(canReachTiles, "canReachTiles", canReachTiles)
 	for i,v in ipairs(canReachTiles) do
 		v.parent = currentNode
 		v.g = v.parent.g + getGScore()
-		self:inserIntoOpenTable(v,targerNode)
+		v.h = getHScore(currentNode, targetNode)
+		self:inserIntoOpenTable(v,targetNode)
 	end
+	-- dump(self.openTable_, "self.openTable_", self.openTable_)
+	-- dump(self.closeTable_, "self.closeTable_", self.closeTable_)
 
-	while not (targetTiledX == currentNode.x and targetTiledY == currentNode.y) do
+	while not (targetNode.x == currentNode.x and targetNode.y == currentNode.y) do
 		if not self:isInCloseTable(currentNode) then
 			--更新OPENTABLE的FScore
+			canReachTiles = self:getCanReachTiles(currentNode)
+			if currentNode.y == 65 then
+				dump(currentNode, "currentNode", currentNode)
+				dump(canReachTiles, "canReachTiles", canReachTiles)
+			end
 			
-		end
-
-		currentNode = table.remove(self.openTable_,1)
-		table.insert(self.closeTable_, currentNode)
-		canReachTiles = self:getCanReachTiles(currentNode)
-		for i,v in ipairs(canReachTiles) do
-			local index = self:getIndexFromOpenTable(currentNode)
-			if index then
-				if self.openTable_[index].g > currentNode.g then
-					--替换
+			for i,v in ipairs(canReachTiles) do
+				local index = self:getIndexFromOpenTable(currentNode)
+				if index then
+					if self.openTable_[index].g > currentNode.g + getGScore() then
+						--替换
+						table.remove(self.openTable_,index)
+						self:inserIntoOpenTable(currentNode,targetNode)
+					end
+				else
+					v.parent = currentNode
+					v.g = v.parent.g + getGScore()
+					v.h = getHScore(currentNode, targetNode)
+					self:inserIntoOpenTable(v,targetNode)
 				end
 			end
-			v.parent = currentNode
-			v.g = v.parent.g + getGScore()
-			self:inserIntoOpenTable(v,targerNode)
+			table.insert(self.closeTable_, currentNode)
+			-- dump(self.closeTable_, "self.closeTable_", self.closeTable_)
 		end
+		currentNode = table.remove(self.openTable_,1)
+		-- dump(currentNode, "currentNode", currentNode)
+		-- dump(currentNode, "currentNode", currentNode)
+		-- dump(self.openTable_, "self.openTable_", self.openTable_)
 		
 	end
 
+	local points = {}
+	while currentNode.parent do
+		if table.getn(points) == 0 then
+			table.insert(points, cc.p(currentNode.x, currentNode.y))
+		else
+			table.insert(points,1, cc.p(currentNode.x, currentNode.y))
+		end
+		currentNode = currentNode.parent
+	end
+	self.openTable_ = {}
+	self.closeTable_ = {}
+	dump(points, "points", points)
 end
 
 function Npc:inserIntoOpenTable(currentNode,targetNode)
@@ -140,6 +176,7 @@ function Npc:inserIntoOpenTable(currentNode,targetNode)
 		local nextFScore = getFScore(v,targetNode)
 		if currentFScore < nextFScore then
 			table.insert(self.openTable_, i,currentNode)
+			return
 		end
 	end
 	table.insert(self.openTable_,currentNode)
@@ -177,28 +214,45 @@ end
 
 
 function Npc:getCanReachTiles(tmpPos)
+	local maxX = self.map_:getMapSize().width - 1
+	local maxY = self.map_:getMapSize().height - 1
 	local tiles = {}
-	--右边
-	if self:canReach({x=tmpPos.x + 1, y=tmpPos.y}) then
-		table.insert(tiles, {x=tmpPos.x + 1, y=tmpPos.y})
+	if tmpPos.x + 1 <= maxX then
+		--右边
+		if self:canReach({x=tmpPos.x + 1, y=tmpPos.y}) then
+			table.insert(tiles, {x=tmpPos.x + 1, y=tmpPos.y})
+		end
 	end
-	--左边
-	if self:canReach({x=tmpPos.x - 1, tmpPos.y}) then
-		table.insert(tiles, {x=tmpPos.x - 1, tmpPos.y})
+	
+	if tmpPos.x - 1 >= 0 then
+		--左边
+		if self:canReach({x=tmpPos.x - 1, y=tmpPos.y}) then
+			table.insert(tiles, {x=tmpPos.x - 1, y=tmpPos.y})
+		end
 	end
-	--上边
-	if self:canReach({x=tmpPos.x, tmpPos.y - 1}) then
-		table.insert(tiles, {x=tmpPos.x, tmpPos.y - 1})
+
+	if tmpPos.y - 1 >= 0 then
+		--上边
+		if self:canReach({x=tmpPos.x, y=tmpPos.y - 1}) then
+			table.insert(tiles, {x=tmpPos.x, y=tmpPos.y - 1})
+		end
 	end
-	--下边
-	if self:canReach({x=tmpPos.x, tmpPos.y + 1}) then
-		table.insert(tiles, {x=tmpPos.x, tmpPos.y + 1})
+
+	if tmpPos.y + 1 <= maxY then
+		--下边
+		if self:canReach({x=tmpPos.x, y=tmpPos.y + 1}) then
+			table.insert(tiles, {x=tmpPos.x, y=tmpPos.y + 1})
+		end
 	end
+	
+	
+	
 
 	return tiles
 end
 
 function Npc:canReach(tmpPos)
+	-- print("tmpPos.x="..tmpPos.x..",tmpPos.y="..tmpPos.y)
 	local gid = self.map_:getLayer("obstacleLayer"):getTileGIDAt(cc.p(tmpPos.x,tmpPos.y))
 	if gid > 0 then
 		local propertites = self.map_:getPropertiesForGID(gid)

@@ -39,9 +39,11 @@ function WorldScene:ctor()
 
 	self.sprite = require("app.components.Npc").create({textureName="player_f0006_walk_1_01.png",scale=0.4,flippedX = true})
     local frames = display.newFrames("player_f0006_walk_1_%02d.png",1,8)
-    self.sprite:pos(16,208)
+    -- self.sprite:pos(16,208)
+    self.sprite:pos(1776,688)
     self.sprite:registActionFrame("walk", frames)
     self.playerNode:addChild(self.sprite, 100)
+    self.sprite:setMap(self.map)
 end
 
 function WorldScene:onEnter()
@@ -115,21 +117,26 @@ function WorldScene:onTouch(event)
 		    	end
 		    end
 
-		    local moveToX = self.sprite:getPositionX() + moveX
-		    local moveToY = self.sprite:getPositionY() + moveY
-		    local tiledX = math.modf(moveToX/self.map:getTileSize().width)
-		    local tiledY = math.modf(((self.map:getMapSize().height * self.map:getTileSize().height ) - moveToY) / self.map:getTileSize().height) 
-		    local gid = self.obstacleLayer_:getTileGIDAt(cc.p(tiledX,tiledY))
-		    if gid > 0 then
-		    	local propertites = self.map:getPropertiesForGID(gid)
-		    	if propertites.canMoveOn ~= "0" then
-		    		self.sprite:moveForward(direction, 32)
-		    	else
-		    		--播放阻挡音乐
-		    	end
-		    else
-		    	self.sprite:moveForward(direction, 32)
-		    end
+		    self.sprite:moveToward(cc.p(event.x,event.y))
+		    -- local moveToX = self.sprite:getPositionX() + moveX
+		    -- local moveToY = self.sprite:getPositionY() + moveY
+		    -- local tiledX = math.modf(moveToX/self.map:getTileSize().width)
+		    -- local tiledY = math.modf(((self.map:getMapSize().height * self.map:getTileSize().height ) - moveToY) / self.map:getTileSize().height) 
+		    -- local gid = self.obstacleLayer_:getTileGIDAt(cc.p(tiledX,tiledY))
+		    -- if gid > 0 then
+		    -- 	print("if")
+		    -- 	local propertites = self.map:getPropertiesForGID(gid)
+		    -- 	if propertites.canMoveOn ~= "0" then
+		    -- 		self.sprite:moveToward(cc.p(event.x,event.y))
+		    -- 		-- self.sprite:moveForward(direction, 32)
+		    -- 	else
+		    -- 		--播放阻挡音乐
+		    -- 	end
+		    -- else
+		    -- 	print("else")
+		    -- 	self.sprite:moveToward(cc.p(event.x,event.y))
+		    -- 	-- self.sprite:moveForward(direction, 32)
+		    -- end
     	end
 	end
 
