@@ -34,16 +34,18 @@ function WorldScene:ctor()
 
     -- 创建player批渲染结点
     self.playerNode = display.newBatchNode("player.png", 100000)
-    self.map:addChild(self.playerNode)
+    self.map:addChild(self.playerNode,100,"playerNode")
     display.addSpriteFrames("player.plist", "player.png")
 
-	self.sprite = require("app.components.Npc").create({textureName="player_f0006_walk_1_01.png",scale=0.4,flippedX = true})
-    local frames = display.newFrames("player_f0006_walk_1_%02d.png",1,8)
-    -- self.sprite:pos(16,208)
-    self.sprite:pos(1776,688)
-    self.sprite:registActionFrame("walk", frames)
+	self.sprite = require("app.components.Npc").create({textureName="player_f0006_walk_1_01.png",scale=0.4,flippedX = true,playerName="player_f0006"})
+    self.sprite:pos(16,208)
     self.playerNode:addChild(self.sprite, 100)
-    self.sprite:setMap(self.map)
+    self.sprite:runAI(self.map)
+
+    self.sprite2 = require("app.components.Npc").create({textureName="player_f0015_walk_1_01.png",scale=0.4,flippedX = true,playerName="player_f0015"})
+    self.sprite2:pos(176,208)
+    self.playerNode:addChild(self.sprite2, 100)
+    self.sprite2:runAI(self.map)
 end
 
 function WorldScene:onEnter()
@@ -81,63 +83,44 @@ function WorldScene:onTouch(event)
 
 		self.map:setPosition(nowX,nowY)
     elseif event.name == "ended" then
-    	if self.isMoved_ then
-    		self.isMoved_ = false
-    	-- elseif self.isRoleMoved_ then
+    	-- if self.isMoved_ then
+    	-- 	self.isMoved_ = false
+    	-- -- elseif self.isRoleMoved_ then
 
-    	else
-		    --如果触点在主角左边,则主角往左移,如果触点在主角右边,则主角往右移动
-		    print("event.x="..event.x..",event.y="..event.y)
-		    local mapPoint = self.map:convertToNodeSpace(cc.p(event.x,event.y))
-		    print("mapPoint.x="..mapPoint.x..",mapPoint.y="..mapPoint.y)
-		    print("spritePoint.x="..self.sprite:getPositionX()..",spritePoint.y="..self.sprite:getPositionY())
-		    local lengthX = mapPoint.x - self.sprite:getPositionX()
-		    local lengthY = mapPoint.y - self.sprite:getPositionY()
-		    local moveX,moveY = 0,0
-		    local direction
-		    if math.abs(lengthX) >= math.abs(lengthY) then
-		    	if lengthX < 0 then
-		    		--向左移动一格
-		    		direction = 3
-		    		moveX = -32
-		    	elseif lengthX > 0 then
-		    		--向右移动一格
-		    		direction = 4
-		    		moveX = 32
-		    	end
-		    else
-		    	if lengthY < 0 then
-		    		--向下移动一格
-		    		direction = 2
-		    		moveY = -32
-		    	elseif lengthY > 0 then
-		    		--向上移动一格
-		    		direction = 1
-		    		moveY = 32
-		    	end
-		    end
+    	-- else
+		   --  --如果触点在主角左边,则主角往左移,如果触点在主角右边,则主角往右移动
+		   --  print("event.x="..event.x..",event.y="..event.y)
+		   --  local mapPoint = self.map:convertToNodeSpace(cc.p(event.x,event.y))
+		   --  print("mapPoint.x="..mapPoint.x..",mapPoint.y="..mapPoint.y)
+		   --  print("spritePoint.x="..self.sprite:getPositionX()..",spritePoint.y="..self.sprite:getPositionY())
+		   --  local lengthX = mapPoint.x - self.sprite:getPositionX()
+		   --  local lengthY = mapPoint.y - self.sprite:getPositionY()
+		   --  local moveX,moveY = 0,0
+		   --  local direction
+		   --  if math.abs(lengthX) >= math.abs(lengthY) then
+		   --  	if lengthX < 0 then
+		   --  		--向左移动一格
+		   --  		direction = 3
+		   --  		moveX = -32
+		   --  	elseif lengthX > 0 then
+		   --  		--向右移动一格
+		   --  		direction = 4
+		   --  		moveX = 32
+		   --  	end
+		   --  else
+		   --  	if lengthY < 0 then
+		   --  		--向下移动一格
+		   --  		direction = 2
+		   --  		moveY = -32
+		   --  	elseif lengthY > 0 then
+		   --  		--向上移动一格
+		   --  		direction = 1
+		   --  		moveY = 32
+		   --  	end
+		   --  end
 
-		    self.sprite:moveToward(cc.p(event.x,event.y))
-		    -- local moveToX = self.sprite:getPositionX() + moveX
-		    -- local moveToY = self.sprite:getPositionY() + moveY
-		    -- local tiledX = math.modf(moveToX/self.map:getTileSize().width)
-		    -- local tiledY = math.modf(((self.map:getMapSize().height * self.map:getTileSize().height ) - moveToY) / self.map:getTileSize().height) 
-		    -- local gid = self.obstacleLayer_:getTileGIDAt(cc.p(tiledX,tiledY))
-		    -- if gid > 0 then
-		    -- 	print("if")
-		    -- 	local propertites = self.map:getPropertiesForGID(gid)
-		    -- 	if propertites.canMoveOn ~= "0" then
-		    -- 		self.sprite:moveToward(cc.p(event.x,event.y))
-		    -- 		-- self.sprite:moveForward(direction, 32)
-		    -- 	else
-		    -- 		--播放阻挡音乐
-		    -- 	end
-		    -- else
-		    -- 	print("else")
-		    -- 	self.sprite:moveToward(cc.p(event.x,event.y))
-		    -- 	-- self.sprite:moveForward(direction, 32)
-		    -- end
-    	end
+		   --  self.sprite:moveToward(cc.p(event.x,event.y))
+    	-- end
 	end
 
 	return true
