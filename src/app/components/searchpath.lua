@@ -97,6 +97,54 @@ end
 
 function getNpcNextAction(npc)
 	--检查附近是否有怪物
+	local action = getEnemy(npc)
+	if not action then
+		return action
+	end
+	
+	if npc.state_ == npcstate.IDLE then
+		return genNpcIdleEvent(npc)
+	elseif npc.state_ == npcstate.MOVE then
+		--todo 是否有敌人
+		action = getEnemy(npc)
+		if not action then
+			return action
+		end
+		local movePoint = table.remove(npc.oribt_,1)
+		if movePoint then
+			local position = convertTilePositionToMapPosition(npc.map_,movePoint)
+			if npc:getPositionX() ~= position.x or npc:getPositionY() ~= position.y then
+				return npc:move(position)
+			end
+		end
+		npc.state_ = npcstate.IDLE
+		npc:stopAllActions()
+		return genNpcIdleEvent(npc)
+	end
+	return nil
+end
+
+function genNpcIdleEvent(npc)
+	if npc.state_ == npcstate.IDLE then
+		--空闲动画
+		if math.random(1, 2) == 1 then
+			npc:idle()
+			return cca.delay(1)
+		--随机移动到当前位置附近的任意位置
+		else
+			local npcStay = npc.map_:convertToNodeSpace(cc.p(npc:getPositionY(),npc:getPositionY()))
+			local npcStayTiledX = math.modf(npcStay.x/npc.map_:getTileSize().width)
+			local npcStayTiledY = math.modf(((npc.map_:getMapSize().height * npc.map_:getTileSize().height ) - npcStay.y) / npc.map_:getTileSize().height)
+			local moveSteps = npc:getCanReachTiles(cc.p(npcStayTiledX,npcStayTiledY))
+			local targetPos = moveSteps[math.random(1, table.getn(moveSteps))]
+			npcSearchPath_(npc,targetPos)
+			npc.state_ = npcstate.MOVE
+			return getNpcNextAction(npc)
+		end
+	end
+end
+
+function getEnemy(npc)
 	if not npc.enemy_ then
 		local enemy = searchEnemy(npc)
 		if enemy then
@@ -131,6 +179,9 @@ function getNpcNextAction(npc)
 			end
 
 			if not targetPos then
+				if targetPos.x == npcTiledX and targetPos.y == npcTiledY then
+					return nil
+				end
 				npcSearchPath_(npc,targetPos)
 				local movePoint = table.remove(npc.oribt_,1)
 				if movePoint then
@@ -147,43 +198,7 @@ function getNpcNextAction(npc)
 			end
 		end
 	end
-	
-	if npc.state_ == npcstate.IDLE then
-		return genNpcIdleEvent(npc)
-	elseif npc.state_ == npcstate.MOVE then
-		--todo 是否有敌人
-		local movePoint = table.remove(npc.oribt_,1)
-		if movePoint then
-			local position = convertTilePositionToMapPosition(npc.map_,movePoint)
-			if npc:getPositionX() ~= position.x or npc:getPositionY() ~= position.y then
-				return npc:move(position)
-			end
-		end
-		npc.state_ = npcstate.IDLE
-		npc:stopAllActions()
-		return genNpcIdleEvent(npc)
-	end
 	return nil
-end
-
-function genNpcIdleEvent(npc)
-	if npc.state_ == npcstate.IDLE then
-		--空闲动画
-		if math.random(1, 2) == 1 then
-			npc:idle()
-			return cca.delay(1)
-		--随机移动到当前位置附近的任意位置
-		else
-			local npcStay = npc.map_:convertToNodeSpace(cc.p(npc:getPositionY(),npc:getPositionY()))
-			local npcStayTiledX = math.modf(npcStay.x/npc.map_:getTileSize().width)
-			local npcStayTiledY = math.modf(((npc.map_:getMapSize().height * npc.map_:getTileSize().height ) - npcStay.y) / npc.map_:getTileSize().height)
-			local moveSteps = npc:getCanReachTiles(cc.p(npcStayTiledX,npcStayTiledY))
-			local targetPos = moveSteps[math.random(1, table.getn(moveSteps))]
-			npcSearchPath_(npc,targetPos)
-			npc.state_ = npcstate.MOVE
-			return getNpcNextAction(npc)
-		end
-	end
 end
 
 function searchEnemy(npc)
