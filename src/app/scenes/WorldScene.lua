@@ -1,15 +1,27 @@
+import("app.components.searchpath")
 local WorldScene = class("WorldScene", function()
     return display.newScene("MainScene")
 end)
 
 function WorldScene:ctor()
-	-- self.map = display.newTilesSprite("bgTile.png",cc.rect(0, 0, display.width * 2, display.height * 2))
-	self.map = cc.TMXTiledMap:create("map.tmx")
+	self.map = cc.TMXTiledMap:create("map2.tmx")
 	self.backGround_ = self.map:getLayer("backgroundLayer")
 	self.obstacleLayer_ = self.map:getLayer("obstacleLayer")
 	self:addChild(self.map)
 	self.touchLayer = display.newLayer()
 	self:addChild(self.touchLayer)
+
+	local objectLayer = self.map:getObjectGroup("npcgenerateLayer")
+	local prop = objectLayer:getObject("npc_gen_point_1")
+	dump(prop, "prop", prop)
+	self.npcGeneratePoint_ = {}
+	local tileX = math.modf(prop.x/self.map:getTileSize().width) 
+	local tileY = math.modf((self.map:getMapSize().height * self.map:getTileSize().height - prop.y)/self.map:getTileSize().height) 
+	print("tileX="..tileX..",tileY="..tileY)
+	table.insert(self.npcGeneratePoint_, convertTilePositionToMapPosition(self.map,cc.p(tileX,tileY)))
+	dump(self.npcGeneratePoint_, "self.npcGeneratePoint_", self.npcGeneratePoint_)
+	
+
 
 	-- 注册touch事件处理函数
     self.touchLayer:addNodeEventListener(cc.NODE_TOUCH_EVENT, function(event)
@@ -38,14 +50,15 @@ function WorldScene:ctor()
     display.addSpriteFrames("player.plist", "player.png")
 
 	self.sprite = require("app.components.Npc").create({textureName="player_f0006_walk_1_01.png",scale=0.4,flippedX = true,playerName="player_f0006"})
-    self.sprite:pos(16,208)
+	local pos = self.npcGeneratePoint_[math.random(1,table.getn(self.npcGeneratePoint_))]
+    self.sprite:pos(pos.x,pos.y)
     self.playerNode:addChild(self.sprite, 100)
     self.sprite:runAI(self.map)
 
-    self.sprite2 = require("app.components.Npc").create({textureName="player_f0015_walk_1_01.png",scale=0.4,flippedX = true,playerName="player_f0015"})
-    self.sprite2:pos(176,208)
-    self.playerNode:addChild(self.sprite2, 100)
-    self.sprite2:runAI(self.map)
+    -- self.sprite2 = require("app.components.Npc").create({textureName="player_f0015_walk_1_01.png",scale=0.4,flippedX = true,playerName="player_f0015"})
+    -- self.sprite2:pos(176,208)
+    -- self.playerNode:addChild(self.sprite2, 100)
+    -- self.sprite2:runAI(self.map)
 end
 
 function WorldScene:onEnter()

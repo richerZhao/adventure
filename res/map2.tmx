@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="50" height="50" tilewidth="32" tileheight="32" nextobjectid="14">
+ <tileset firstgid="1" name="tmw_desert_spacing" tilewidth="32" tileheight="32" spacing="1" margin="1">
+  <image source="../../../../res/TileGameResources/tmw_desert_spacing.png" width="265" height="199"/>
+ </tileset>
+ <tileset firstgid="49" name="meta_tiles" tilewidth="32" tileheight="32" spacing="1" margin="1">
+  <image source="../../../../res/TileGameResources/meta_tiles.png" width="67" height="34"/>
+  <tile id="0">
+   <properties>
+    <property name="canMoveOn" value="0"/>
+   </properties>
+  </tile>
+ </tileset>
+ <layer name="backgroundLayer" width="50" height="50">
+  <data encoding="base64" compression="zlib">
+   eJztltkKwjAQRccNca0biFa0WsVd///vnKEtpDFiCtpEuQfOS55yaDMJEQAAAAB+nbvmjJ1bGLIHg67QO9bsxsKY0PEN/rXjyJ5Sd5TseausZZ7J746lwRsbGdZ96qiw1dQa5ffZZwN2QOY+fbaFJe9dpcW2Uztk3xHR81mKy916DrVjwTYVe5R0dLV1Uf61K/nZIQaWyjcxzTBXqB0TdqrYoGTPdW1dlI5snvnWIedD/hfbc+7T+Riyo9Qx5efruw71rsnuFFfsNYvcHyuDrtA71Dshm0cXMr93fe4o8r5Cx+dBh98d+ix9pcxYnzoAAAAAAAAAAADgngfRMjEA
+  </data>
+ </layer>
+ <layer name="obstacleLayer" width="50" height="50" visible="0">
+  <data encoding="base64" compression="zlib">
+   eJzt1lsKgCAQBdC21P4317+EmZqP6RwQEhzygk4dBwCwu7PzmKV2L3J8I3KOdF873o/cmqfa1XOU1s7OcfdcUpeul6Ndz3evkqPmfuTmI6U53p6t3Hyklp6zWr+K0ncjfs8j/V/V1snRLnKOlgEAAAD81wXgXyko
+  </data>
+ </layer>
+ <objectgroup name="monstergenerateLayer">
+  <object id="1" name="monster_gen_point_8" x="229" y="388" width="22" height="22"/>
+  <object id="2" name="monster_gen_point_9" x="356" y="388" width="24" height="22"/>
+  <object id="4" name="monster_gen_point_7" x="549" y="613" width="22" height="21"/>
+  <object id="5" name="monster_gen_point_6" x="358" y="838" width="21" height="21"/>
+  <object id="6" name="monster_gen_point_5" x="229" y="838" width="22" height="21"/>
+  <object id="7" name="monster_gen_point_3" x="390" y="709" width="21" height="21"/>
+  <object id="8" name="monster_gen_point_2" x="197" y="710" width="22" height="20"/>
+  <object id="9" name="monster_gen_point_4" x="389" y="517" width="22" height="22"/>
+  <object id="10" name="monster_gen_point_1" x="165" y="517" width="23" height="20"/>
+ </objectgroup>
+ <objectgroup name="npcgenerateLayer">
+  <object id="11" name="npc_gen_point_1" x="36" y="612" width="23" height="23"/>
+ </objectgroup>
+</map>

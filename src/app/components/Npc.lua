@@ -31,7 +31,7 @@ function Npc:ctor(params)
 	self.oribt_ = {}
 	-- self.fighttarget_ = {}
 	self.event_ = {}
-	self.status_ = Npc.STATUS_IDLE
+	self.status_ = npcstatus.IDLE
 	self.enemy_ = nil
 	self.direction_ = npcdirect.DIRECTION_RIGHT
 	self:setFlippedX(true)
@@ -301,8 +301,11 @@ function Npc:getCanReachTiles(tmpPos)
 end
 
 function Npc:canReach(tmpPos)
-	-- print("tmpPos.x="..tmpPos.x..",tmpPos.y="..tmpPos.y)
+	dump(tmpPos, "tmpPos", tmpPos)
 	local gid = self.map_:getLayer("obstacleLayer"):getTileGIDAt(cc.p(tmpPos.x,tmpPos.y))
+	if not gid then
+		return false
+	end
 	if gid > 0 then
 		local propertites = self.map_:getPropertiesForGID(gid)
 		if propertites.canMoveOn == "0" then
