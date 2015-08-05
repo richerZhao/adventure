@@ -1,4 +1,5 @@
 import("app.components.constant")
+import("app.components.commonaction")
 function npcSearchPath(npc,targetPos)
 	local target = npc.map_:convertToNodeSpace(targetPos)
 	local targetTiledX = math.modf(target.x/npc.map_:getTileSize().width)
@@ -15,53 +16,45 @@ function npcSearchPath_(npc,targetNode)
 	end
 
 	local selfNode = cc.p(selfTiledX,selfTiledY)
-	-- local selfNode = cc.p(targetTiledX,targetTiledY)
-
-	-- dump(targetNode, "targetNode", targetNode)
-	-- dump(selfNode, "selfNode", selfNode)
-	-- dump(npc.openTable_, "self.openTable_", npc.openTable_)
-	-- dump(npc.closeTable_, "self.openTable_", npc.closeTable_)
+	dump(selfNode, "selfNode", selfNode)
 	--检查终点是否可以到达
-	if not npc:canReach(targetNode) then
+	if not canReach(npc,targetNode) then
 		return
 	end
 	table.insert(npc.openTable_, {x=selfTiledX,y=selfTiledY,g=0,h=0,f=0})
 	local currentNode = table.remove(npc.openTable_,1)
 	table.insert(npc.closeTable_, currentNode)
-	local canReachTiles = npc:getCanReachTiles(currentNode)
+	local canReachTiles = getCanReachTiles(npc,currentNode)
+	-- dump(canReachTiles, "canReachTiles", canReachTiles)
 	for i,v in ipairs(canReachTiles) do
 		v.parent = currentNode
 		v.g = v.parent.g + getGScore()
 		v.h = getHScore(currentNode, targetNode)
-		npc:inserIntoOpenTable(v,targetNode)
+		inserIntoOpenTable(npc,v,targetNode)
 	end
 
 	while not (targetNode.x == currentNode.x and targetNode.y == currentNode.y) do
-		if not npc:isInCloseTable(currentNode) then
+		if not isInCloseTable(npc,currentNode) then
 			--更新OPENTABLE的FScore
-			canReachTiles = npc:getCanReachTiles(currentNode)
-			
+			canReachTiles = getCanReachTiles(npc,currentNode)
 			for i,v in ipairs(canReachTiles) do
-				local index = npc:getIndexFromOpenTable(currentNode)
+				local index = getIndexFromOpenTable(npc,v)
 				if index then
 					if npc.openTable_[index].g > currentNode.g + getGScore() then
 						--替换
 						table.remove(npc.openTable_,index)
-						npc:inserIntoOpenTable(currentNode,targetNode)
+						inserIntoOpenTable(npc,currentNode,targetNode)
 					end
 				else
 					v.parent = currentNode
 					v.g = v.parent.g + getGScore()
 					v.h = getHScore(currentNode, targetNode)
-					npc:inserIntoOpenTable(v,targetNode)
+					inserIntoOpenTable(npc,v,targetNode)
 				end
 			end
 			table.insert(npc.closeTable_, currentNode)
 		end
 		currentNode = table.remove(npc.openTable_,1)
-		if not currentNode then 
-			break
-		end
 	end
 
 	local points = {}
@@ -79,97 +72,12 @@ function npcSearchPath_(npc,targetNode)
 	npc.state_ = npcstate.MOVE
 end
 
-function executeNpcAction(npc,action,callback)
-	transition.execute(npc, action, {  
-	    onComplete = function(npc)
-		    nextNpcAction(npc)
-	    end,
-	    time = 1,
-	})  
-end
-
-function nextNpcAction(npc)
-	local action = getNpcNextAction(npc)
-	if action then
-		executeNpcAction(npc,action,nextNpcAction)
-	end
-end
-
-function getNpcNextAction(npc)
-	if npc.state_ == npcstate.IDLE then
-		-- TODO 是否有可以接取的任务
-
-		-- TODO 是否需要整修
-
-		-- TODO 是否需要搜索范围内的怪物
-		local action = getEnemy(npc)
-		if action then
-			return action
-		end
-
-		-- TODO 移动到刷怪区域
-		return genNpcIdleEvent(npc)
-	elseif npc.state_ == npcstate.MOVE then
-		--TODO 是否有可以领取的任务,有可以领取的任务,领取任务并且将状态置为EVENT
-
-		--TODO 是否附近有怪物
-		local action = getEnemy(npc)
-		if action then
-			return action
-		end
-
-
-		local movePoint = table.remove(npc.oribt_,1)
-		if movePoint then
-			local position = convertTilePositionToMapPosition(npc.map_,movePoint)
-			if npc:getPositionX() ~= position.x or npc:getPositionY() ~= position.y then
-				return npc:move(position)
-			end
-		end
-		npc.state_ = npcstate.IDLE
-		npc:stopAllActions()
-		return genNpcIdleEvent(npc)
-
-	elseif npc.state_ == npcstate.FIGHT then
-		--TODO 判断怪物是否已经死亡,死亡后将状态设置为IDLE
-
-		--TODO 判断怪物是否超出攻击范围,超出攻击范围将重新计算路径,再行攻击
-
-		--TODO 判断当前状态决定下一个动作 攻击前摇 ==》攻击 ==》攻击后摇 
-	elseif npc.state_ == npcstate.EVENT then
-		--TODO 判断任务是否已经完成,完成后将状态设置为IDLE
-	elseif npc.state_ == npcstate.FIGHT_MOVE then
-		--TODO 判断怪物是否已经死亡,死亡后将状态设置为IDLE
-		--TODO 向目标移动
-		--TODO 移动到终点以后将状态设置为FIGHT 
-	elseif npc.state_ == npcstate.EVENT_MOVE then
-		--TODO 判断任务是否已经完成,完成后将状态设置为IDLE
-		--TODO 移动到终点以后将状态设置为EVENT
-	elseif npc.state_ == npcstate.IDLE_MOVE then
-		--TODO 判断是否全部整备完毕,整备完毕则判断是否有任务,有任务则将状态置为EVENT,否则将状态设置为IDLE
-	end
-	return nil
-end
-
-function genNpcIdleEvent(npc)
-	print("genNpcIdleEvent")
-	if npc.state_ == npcstate.IDLE then
-		--空闲动画
-		if math.random(1, 2) == 1 then
-			npc:idle()
-			return cca.delay(1)
-		--随机移动到当前位置附近的任意位置
-		else
-			local npcStay = npc.map_:convertToNodeSpace(cc.p(npc:getPositionY(),npc:getPositionY()))
-			local npcStayTiledX = math.modf(npcStay.x/npc.map_:getTileSize().width)
-			local npcStayTiledY = math.modf(((npc.map_:getMapSize().height * npc.map_:getTileSize().height ) - npcStay.y) / npc.map_:getTileSize().height)
-			local moveSteps = npc:getCanReachTiles(cc.p(npcStayTiledX,npcStayTiledY))
-			local targetPos = moveSteps[math.random(1, table.getn(moveSteps))]
-			npcSearchPath_(npc,targetPos)
-			npc.state_ = npcstate.MOVE
-			return getNpcNextAction(npc)
-		end
-	end
+function moveToMonsterPoint(npc)
+	local areaIndex = math.random(table.getn(npc.map_.monsterGenerateAreas_))
+	local tileIndex = math.random(table.getn(npc.map_.monsterGenerateAreas_[areaIndex].tiles))
+	npcSearchPath_(npc,npc.map_.monsterGenerateAreas_[areaIndex].tiles[tileIndex])
+	npc.state_ = npcstate.MOVE
+	return getNpcNextAction(npc)
 end
 
 function getEnemy(npc)
@@ -182,7 +90,7 @@ function getEnemy(npc)
 			local npcPos = npc.map_:convertToNodeSpace(cc.p(npc:getPositionX(),npc:getPositionY()))
 			local npcTiledX = math.modf(npcPos.x/npc.map_:getTileSize().width)
 			local npcTiledY = math.modf(((npc.map_:getMapSize().height * npc.map_:getTileSize().height ) - npcPos.y) / npc.map_:getTileSize().height)
-			local tiles = enemy:getCanReachTiles(cc.p(targetTiledX,targetTiledY))
+			local tiles = getCanReachTiles(enemy,cc.p(targetTiledX,targetTiledY))
 			local minDuration = 0
 			local targetPos
 			for i,v in ipairs(tiles) do
@@ -216,13 +124,10 @@ function getEnemy(npc)
 					local position = convertTilePositionToMapPosition(npc.map_,movePoint)
 					if npc:getPositionX() ~= position.x or npc:getPositionY() ~= position.y then
 						npc.enemy_ = enemy
-						npc.state_ = npcstate.MOVE
-						return npc:move(position)
+						npc.state_ = npcstate.MOVE_FIGHT
+						return move(npc,position)
 					end
 				end
-				npc.state_ = npcstate.IDLE
-				npc:stopAllActions()
-				return genNpcIdleEvent(npc)
 			end
 		end
 	end
@@ -266,4 +171,82 @@ end
 
 function getHScore(currentNode,targetNode)
 	return math.abs(currentNode.x - targetNode.x) + math.abs(currentNode.y - targetNode.y)
+end
+
+function canReach(npc,tmpPos)
+	local gid = npc.map_:getLayer("obstacleLayer"):getTileGIDAt(cc.p(tmpPos.x,tmpPos.y))
+	if not gid then
+		return false
+	end
+	if gid > 0 then
+		local propertites = npc.map_:getPropertiesForGID(gid)
+		if propertites.canMoveOn == "0" then
+			return false
+		end
+	end
+	return true
+end
+
+function getCanReachTiles(npc,tmpPos)
+	local maxX = npc.map_:getMapSize().width - 1
+	local maxY = npc.map_:getMapSize().height - 1
+	local tiles = {}
+	if tmpPos.x + 1 <= maxX then
+		--右边
+		if canReach(npc,{x=tmpPos.x + 1, y=tmpPos.y}) then
+			table.insert(tiles, {x=tmpPos.x + 1, y=tmpPos.y})
+		end
+	end
+	
+	if tmpPos.x - 1 >= 0 then
+		--左边
+		if canReach(npc,{x=tmpPos.x - 1, y=tmpPos.y}) then
+			table.insert(tiles, {x=tmpPos.x - 1, y=tmpPos.y})
+		end
+	end
+
+	if tmpPos.y - 1 >= 0 then
+		--上边
+		if canReach(npc,{x=tmpPos.x, y=tmpPos.y - 1}) then
+			table.insert(tiles, {x=tmpPos.x, y=tmpPos.y - 1})
+		end
+	end
+
+	if tmpPos.y + 1 <= maxY then
+		--下边
+		if canReach(npc,{x=tmpPos.x, y=tmpPos.y + 1}) then
+			table.insert(tiles, {x=tmpPos.x, y=tmpPos.y + 1})
+		end
+	end
+	return tiles
+end
+
+function inserIntoOpenTable(npc,currentNode,targetNode)
+	local currentFScore = getFScore(currentNode,targetNode)
+	for i,v in ipairs(npc.openTable_) do
+		local nextFScore = getFScore(v,targetNode)
+		if currentFScore < nextFScore then
+			table.insert(npc.openTable_, i,currentNode)
+			return
+		end
+	end
+	table.insert(npc.openTable_,currentNode)
+end
+
+function isInCloseTable( npc,currentNode )
+	for i,v in ipairs(npc.closeTable_) do
+		if currentNode.x == v.x and currentNode.y == v.y then
+			return true
+		end
+	end
+	return false
+end
+
+function getIndexFromOpenTable(npc,currentNode )
+	for i,v in ipairs(npc.openTable_) do
+		if currentNode.x == v.x and currentNode.y == v.y then
+			return i
+		end
+	end
+	return nil
 end
