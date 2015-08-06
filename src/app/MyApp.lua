@@ -1,6 +1,13 @@
 require("config")
 require("cocos.init")
 require("framework.init")
+import("app.components.constant")
+import("app.components.commonaction")
+import("app.components.searchpath")
+import("app.components.monsterManager")
+import("app.components.npcManager")
+import("app.components.ai")
+
 GameState= require(cc.PACKAGE_NAME .. ".cc.utils.GameState")
 scheduler = require("framework.scheduler")
 import("app.utils.utils")

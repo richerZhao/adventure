@@ -1,5 +1,5 @@
-import("app.components.searchpath")
-import("app.components.monsterManeger")
+-- import("app.components.searchpath")
+-- import("app.components.monsterManager")
 local WorldScene = class("WorldScene", function()
     return display.newScene("MainScene")
 end)
@@ -13,52 +13,12 @@ function WorldScene:ctor()
 	self:addChild(self.touchLayer)
 	display.addSpriteFrames("player.plist", "player.png")
 
-	local gm = require("app.components.Npc").create({textureName="player_f0006_walk_1_01.png",scale=0.4,flippedX = true,playerName="player_f0006"})
-	gm.map_ = self.map
-	local objectLayer = self.map:getObjectGroup("npcgenerateLayer")
-	self.map.npcGenerateAreas_ = {}
-	for i=1,1 do
-		local area = {}
-		area.tiles = {}
-		local prop = objectLayer:getObject("npc_gen_point_"..i)
-		local minTileX = math.modf(prop.x/self.map:getTileSize().width) 
-		local maxTileY = math.modf((self.map:getMapSize().height * self.map:getTileSize().height - prop.y)/self.map:getTileSize().height)
-		local maxTileX = math.modf((prop.x + prop.width)/self.map:getTileSize().width) 
-		local minTileY = math.modf((self.map:getMapSize().height * self.map:getTileSize().height - (prop.y + prop.height))/self.map:getTileSize().height)
-		for x=minTileX,maxTileX do
-			for y=minTileY,maxTileY do
-				if canReach(gm, cc.p(x,y)) then
-					table.insert(area.tiles, cc.p(x,y))
-				end
-				
-			end
-		end
-		table.insert(self.map.npcGenerateAreas_, area)
-	end
-	dump(self.map.npcGenerateAreas_, "self.map.npcGenerateAreas_", self.map.npcGenerateAreas_)
-
 	--注册怪物的出生点
-	local monsterLayer = self.map:getObjectGroup("monstergenerateLayer")
+	initMonsterManager(self.map)
 
-	for i=1,7 do
-		local area = {}
-		area.tiles = {}
-		local prop = monsterLayer:getObject("monster_gen_point_"..i)
-		local minTileX = math.modf(prop.x/self.map:getTileSize().width) 
-		local maxTileY = math.modf((self.map:getMapSize().height * self.map:getTileSize().height - prop.y)/self.map:getTileSize().height)
-		local maxTileX = math.modf((prop.x + prop.width)/self.map:getTileSize().width) 
-		local minTileY = math.modf((self.map:getMapSize().height * self.map:getTileSize().height - (prop.y + prop.height))/self.map:getTileSize().height)
-		for x=minTileX,maxTileX do
-			for y=minTileY,maxTileY do
-				if canReach(gm, cc.p(x,y)) then
-					table.insert(area.tiles, cc.p(x,y))
-				end
-				
-			end
-		end
-		table.insert(self.map.monsterGenerateAreas_, area)
-	end
-	gm = nil
+	--注册NPC的出生点
+	initNpcManager(self.map)
+	
 	-- 注册touch事件处理函数
     self.touchLayer:addNodeEventListener(cc.NODE_TOUCH_EVENT, function(event)
      	print("touch,event.name="..event.name)
@@ -66,24 +26,9 @@ function WorldScene:ctor()
     end)
     self.touchLayer:setTouchEnabled(true)
 
-    -- 创建player批渲染结点
-    self.playerNode = display.newBatchNode("player.png", 100000)
-    self.map:addChild(self.playerNode,100,"playerNode")
+	addNpc(require("app.components.Npc").create({textureName="player_f0006_walk_1_01.png",scale=0.4,flippedX = true,playerName="player_f0006"}),"npc_gen_point_1")
 
-
-	self.sprite = require("app.components.Npc").create({textureName="player_f0006_walk_1_01.png",scale=0.4,flippedX = true,playerName="player_f0006"})
-	local areaIndex = math.random(1,table.getn(self.map.npcGenerateAreas_))
-	local tileIndex = math.random(1,table.getn(self.map.npcGenerateAreas_[areaIndex].tiles))
-	local pos = convertTilePositionToMapPosition(self.map,self.map.npcGenerateAreas_[areaIndex].tiles[tileIndex])
-    self.sprite:pos(pos.x,pos.y)
-    self.playerNode:addChild(self.sprite, 100)
-    self.sprite:runAI(self.map)
-
-
-    -- self.sprite2 = require("app.components.Npc").create({textureName="player_f0015_walk_1_01.png",scale=0.4,flippedX = true,playerName="player_f0015"})
-    -- self.sprite2:pos(176,208)
-    -- self.playerNode:addChild(self.sprite2, 100)
-    -- self.sprite2:runAI(self.map)
+	scheduler.scheduleGlobal(monsterAreaRun,10)
 end
 
 function WorldScene:onEnter()

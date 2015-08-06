@@ -1,4 +1,4 @@
-import("app.components.searchpath")
+-- import("app.components.searchpath")
 function executeNpcAction(npc,action,callback)
 	transition.execute(npc, action, {  
 	    onComplete = function(npc)
@@ -25,20 +25,20 @@ function getNpcNextAction(npc)
 		-- TODO 是否需要整修
 
 		-- TODO 是否需要搜索范围内的怪物
-		local action = getEnemy(npc)
+		local action = getEnemyForNpc(npc)
 		if action then
 			return action
 		end
-		print("getEnemy")
+		print("getEnemyForNpc")
 
 		-- TODO 移动到刷怪区域
-		return moveToMonsterPoint(npc)
+		return moveToMonsterArea(npc)
 	elseif npc.state_ == npcstate.MOVE then
 		print("MOVE")
 		--TODO 是否有可以领取的任务,有可以领取的任务,领取任务并且将状态置为EVENT
 
 		--TODO 是否附近有怪物
-		local action = getEnemy(npc)
+		local action = getEnemyForNpc(npc)
 		if action then
 			return action
 		end
@@ -76,9 +76,9 @@ end
 --怪物AI
 
 function nextMonsterAction(monster)
-	local action = getMonsterNextAction(npc)
+	local action = getMonsterNextAction(monster)
 	if action then
-		executeNpcAction(npc,action,nextMonsterAction)
+		executeNpcAction(monster,action,nextMonsterAction)
 	end
 end
 
@@ -90,20 +90,19 @@ function getMonsterNextAction(monster)
 		-- TODO 是否需要整修
 
 		-- TODO 是否需要搜索范围内的怪物
-		local action = getEnemy(monster)
+		local action = getEnemyForNpc(monster)
 		if action then
 			return action
 		end
-		print("getEnemy")
 
 		-- TODO 随机移动到可移动的区域
-		return moveToMonsterPoint(monster)
+		return moveInMonsterArea(monster)
 	elseif monster.state_ == npcstate.MOVE then
 		print("MOVE")
 		--TODO 是否有可以领取的任务,有可以领取的任务,领取任务并且将状态置为EVENT
 
 		--TODO 是否附近有怪物
-		local action = getEnemy(monster)
+		local action = getEnemyForNpc(monster)
 		if action then
 			return action
 		end
@@ -116,7 +115,7 @@ function getMonsterNextAction(monster)
 			end
 		end
 		monster.state_ = npcstate.IDLE
-		return getNpcNextAction(monster)
+		return getMonsterNextAction(monster)
 	elseif monster.state_ == npcstate.FIGHT then
 		--TODO 判断怪物是否已经死亡,死亡后将状态设置为IDLE
 

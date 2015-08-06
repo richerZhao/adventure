@@ -1,4 +1,4 @@
-import("app.components.ai")
+-- import("app.components.ai")
 local Npc = class("Npc",function (params)
 	local frame = display.newSpriteFrame(params.textureName)
 	return cc.Sprite:createWithSpriteFrame(frame)
