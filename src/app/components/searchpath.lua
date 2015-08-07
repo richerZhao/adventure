@@ -51,7 +51,13 @@ function npcSearchPath_(npc,targetNode)
 			end
 			table.insert(npc.closeTable_, currentNode)
 		end
-		currentNode = table.remove(npc.openTable_,1)
+		local nextNode = table.remove(npc.openTable_,1)
+		if nextNode then
+			currentNode = nextNode
+		else
+			dump(currentNode, "currentNode", currentNode)
+			return false
+		end
 	end
 
 	local points = {}
@@ -94,34 +100,27 @@ function getEnemyForNpc(npc)
 			enemy = searchEnemyForMonster(npc)
 		end
 		if enemy then
-			local target = npc.map_:convertToNodeSpace(cc.p(enemy:getPositionX(),enemy:getPositionY()))
-			local targetTiledX = math.modf(target.x/npc.map_:getTileSize().width)
-			local targetTiledY = math.modf(((npc.map_:getMapSize().height * npc.map_:getTileSize().height ) - target.y) / npc.map_:getTileSize().height)
-			local npcPos = npc.map_:convertToNodeSpace(cc.p(npc:getPositionX(),npc:getPositionY()))
-			local npcTiledX = math.modf(npcPos.x/npc.map_:getTileSize().width)
-			local npcTiledY = math.modf(((npc.map_:getMapSize().height * npc.map_:getTileSize().height ) - npcPos.y) / npc.map_:getTileSize().height)
+			local targetTiledX = math.modf(enemy:getPositionX()/npc.map_:getTileSize().width)
+			local targetTiledY = math.modf(((npc.map_:getMapSize().height * npc.map_:getTileSize().height ) - enemy:getPositionY()) / npc.map_:getTileSize().height)
+			local npcTiledX = math.modf(npc:getPositionX()/npc.map_:getTileSize().width)
+			local npcTiledY = math.modf(((npc.map_:getMapSize().height * npc.map_:getTileSize().height ) - npc:getPositionY()) / npc.map_:getTileSize().height)
 			local tiles = getCanReachTiles(enemy,cc.p(targetTiledX,targetTiledY))
 			local minDuration = 0
 			local targetPos
 			for i,v in ipairs(tiles) do
-				local lengX = npcTiledX - targetTiledX
-				local lengY = npcTiledY - targetTiledY
-				local durationScore = 0
-				if npcdirect.DIRECTION_ == npcdirect.DIRECTION_LEFT and lengX < 0 then
-					durationScore = durationScore + 1
-				elseif npcdirect.DIRECTION_ == npcdirect.DIRECTION_RIGHT and lengX > 0 then
-					durationScore = durationScore + 1
-				elseif npcdirect.DIRECTION_ == npcdirect.DIRECTION_UP and lengY > 0 then
-					durationScore = durationScore + 1
-				elseif npcdirect.DIRECTION_ == npcdirect.DIRECTION_DOWN and lengY < 0 then
-					durationScore = durationScore + 1
+				if npc.type_ ~= npctype.MONSTER then
+					local lengX = npcTiledX - v.x
+					local lengY = npcTiledY - v.y
+					local d = math.abs(lengX) + math.abs(lengY)
+					if minDuration == 0 or minDuration > d then
+						minDuration = d
+						targetPos = v
+					end
+				else
+					getCanReachForMonster(npc,convertMapPositionToTilePosition(npc.map_,cc.p(v:getPositionX(),v:getPositionY())))
 				end
-				local d = math.abs(lengX) + math.abs(lengY) + durationScore
 
-				if minDuration == 0 or minDuration > d then
-					minDuration = d
-					targetPos = cc.p(targetTiledX,targetTiledY)
-				end
+				
 			end
 
 			if targetPos then
@@ -145,12 +144,10 @@ function getEnemyForNpc(npc)
 end
 
 function searchEnemyForNpc(npc)
-	local npcGLPosition = cc.p(npc:getPositionX(),npc:getPositionY())
-	local x = npcGLPosition.x - (npc.map_:getTileSize().width * 3 + npc.map_:getTileSize().width/2)
-	local y = npcGLPosition.y - (npc.map_:getTileSize().height * 3 + npc.map_:getTileSize().height/2)
+	local x = npc:getPositionX() - (npc.map_:getTileSize().width * 3 + npc.map_:getTileSize().width/2)
+	local y = npc:getPositionY() - (npc.map_:getTileSize().height * 3 + npc.map_:getTileSize().height/2)
 	local shape = cc.rect(x, y, npc.map_:getTileSize().width * 7, npc.map_:getTileSize().height * 7)
 	local childs = npc.map_:getChildByName("monsterNode"):getChildren()
-	local minDuration = 0
 	for i,v in ipairs(childs) do
 		if cc.rectContainsPoint(shape, cc.p(v:getPositionX(),v:getPositionY())) then
 			return v
@@ -160,14 +157,14 @@ function searchEnemyForNpc(npc)
 end
 
 function searchEnemyForMonster(monster)
-	local npcGLPosition = cc.p(monster:getPositionX(),monster:getPositionY())
-	local x = npcGLPosition.x - (monster.map_:getTileSize().width * 3 + monster.map_:getTileSize().width/2)
-	local y = npcGLPosition.y - (monster.map_:getTileSize().height * 3 + monster.map_:getTileSize().height/2)
+	local x = monster:getPositionX() - (monster.map_:getTileSize().width * 3 + monster.map_:getTileSize().width/2)
+	local y = monster:getPositionY() - (monster.map_:getTileSize().height * 3 + monster.map_:getTileSize().height/2)
 	local shape = cc.rect(x, y, monster.map_:getTileSize().width * 7, monster.map_:getTileSize().height * 7)
 	local childs = monster.map_:getChildByName("playerNode"):getChildren()
 	for i,v in ipairs(childs) do
 		if cc.rectContainsPoint(shape, cc.p(v:getPositionX(),v:getPositionY())) then
-			if canReachForMonster(monster,convertMapPositionToTilePosition(monster.map_,cc.p(v:getPositionX(),v:getPositionY()))) then
+			local tile = getCanReachForMonster(monster,convertMapPositionToTilePosition(monster.map_,cc.p(v:getPositionX(),v:getPositionY())))
+			if tile then
 				return v
 			end
 		end
@@ -213,14 +210,17 @@ function canReach(npc,tmpPos)
 	return true
 end
 
-function canReachForMonster(monster,tmpPos)
-	if canReach(monster,tmpPos) then
-		local monsterArea = getMonsterAreaWithMonster(monster.areaName)
-		if tmpPos.x >= monsterArea.minX and tmpPos.x <= monsterArea.maxX and tmpPos.y >= monsterArea.minY and tmpPos.y <= monsterArea.maxY then
-			return true
+function getCanReachForMonster(monster,tmpPos)
+	local tiles = getCanReachTiles(monster,tmpPos)
+	for i,v in ipairs(tiles) do
+		if canReach(monster,v) then
+			local monsterArea = getMonsterAreaWithMonster(monster.areaName)
+			if v.x >= monsterArea.minX and v.x <= monsterArea.maxX and v.y >= monsterArea.minY and v.y <= monsterArea.maxY then
+				return v
+			end
 		end
 	end
-	return false
+	return nil
 end
 
 function getCanReachTiles(npc,tmpPos)

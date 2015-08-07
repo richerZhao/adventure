@@ -40,6 +40,7 @@ function addNpc(npc,areaName)
 	local area = npcManager.npcGenerateAreas[areaName]
 	local tileIndex = math.random(1,table.getn(area.tiles))
 	local pos = convertTilePositionToMapPosition(npcManager.map_,area.tiles[tileIndex])
+	npc.type_ = npctype.NPC
     npc:pos(pos.x,pos.y)
     table.insert(area.npcs, npc)
     npcManager.playerNode:addChild(npc, 100)

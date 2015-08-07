@@ -70,13 +70,14 @@ end
 
 --在野区中增加一个怪物
 function addMonster(monster)
+	monster.type_ = npctype.MONSTER
 	local area = getMonsterAreaNoMonster()
 	addMonsterToArea_(monster,area)
 	if table.getn(area.monsters) > 0 then
 		monsterManager.areasWithMonster.add(area.areaName,area)
 	end
 	monsterManager.areasNoMonster.remove(area.areaName)
-	monster:runAI(npcManager.map_)
+	monster:runAI(monsterManager.map_)
 end
 
 --在野区中增加一个怪物
@@ -121,7 +122,7 @@ function getMonsterCount()
 end
 
 function monsterAreaRun()
-	local maxMonsterNum = getNpcCount("npc_gen_point_1") * 2
+	local maxMonsterNum = getNpcCount("npc_gen_point_1")
 	if getMonsterCount() < maxMonsterNum then
 		addMonster(require("app.components.Monster").create({textureName="player_f0015_walk_1_01.png",scale=0.4,flippedX = true,playerName="player_f0015"}))
 	end
