@@ -57,6 +57,7 @@ function getNpcNextAction(npc)
 		if action then
 			if npc.enemy_ then
 				if npc.enemy_.attr_.hp <= 0 then
+					npc.enemy_:dead()
 					npc.enemy_ = nil
 					npc.state_ = npcstate.IDLE
 					return getNpcNextAction(npc)

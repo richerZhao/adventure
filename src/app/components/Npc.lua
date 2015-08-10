@@ -84,6 +84,7 @@ function Npc:attack()
 		action = cca.delay(1)
 	elseif self.state_ == npcstate.FIGHT and self.status_ == npcstatus.FIGHT_END then
 		--TODO 播放前摇
+		idle(self)
 		self.status_ = npcstatus.FIGHT_START
 		action = cca.delay(1)
 	end
