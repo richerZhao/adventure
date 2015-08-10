@@ -10,6 +10,9 @@ npcstate.MOVE_EVENT = 7
 npcstatus = {}
 npcstatus.IDLE = 1
 npcstatus.MOVE = 2
+npcstatus.FIGHT_START = 3
+npcstatus.FIGHT_ACT = 4
+npcstatus.FIGHT_END = 5
 
 npcdirect = {}
 npcdirect.DIRECTION_UP = 1

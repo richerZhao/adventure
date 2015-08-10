@@ -19,6 +19,7 @@ end
 
 function getNpcNextAction(npc)
 	if npc.state_ == npcstate.IDLE then
+		print("getNpcNextAction npcstate.IDLE")
 		-- TODO 是否有可以接取的任务
 
 		-- TODO 是否需要整修
@@ -29,6 +30,7 @@ function getNpcNextAction(npc)
 			return action
 		end
 
+		print("moveToMonsterArea")
 		-- TODO 移动到刷怪区域
 		return moveToMonsterArea(npc)
 	elseif npc.state_ == npcstate.MOVE then
@@ -50,6 +52,21 @@ function getNpcNextAction(npc)
 		npc.state_ = npcstate.IDLE
 		return getNpcNextAction(npc)
 	elseif npc.state_ == npcstate.FIGHT then
+		print("getNpcNextAction npcstate.FIGHT")
+		local action = npc:attack()
+		if action then
+			if npc.enemy_ then
+				if npc.enemy_.attr_.hp <= 0 then
+					npc.enemy_ = nil
+					npc.state_ = npcstate.IDLE
+					return getNpcNextAction(npc)
+				end
+			end
+			return action
+		else
+			npc.state_ = npcstate.IDLE
+			return getNpcNextAction(npc)
+		end
 		--TODO 判断怪物是否已经死亡,死亡后将状态设置为IDLE
 
 		--TODO 判断怪物是否超出攻击范围,超出攻击范围将重新计算路径,再行攻击
@@ -58,6 +75,7 @@ function getNpcNextAction(npc)
 	elseif npc.state_ == npcstate.EVENT then
 		--TODO 判断任务是否已经完成,完成后将状态设置为IDLE
 	elseif npc.state_ == npcstate.MOVE_FIGHT then
+		print("getNpcNextAction npcstate.MOVE_FIGHT")
 		--TODO 判断怪物是否已经死亡,死亡后将状态设置为IDLE
 		--TODO 判断与怪物的距离是否已经到了可以攻击的距离了
 		local targetTiledX = math.modf(npc.enemy_:getPositionX()/npc.map_:getTileSize().width)
@@ -68,7 +86,19 @@ function getNpcNextAction(npc)
 			npc.state_ = npcstate.FIGHT
 			return getNpcNextAction(npc)
 		else
-			--TODO 修正路径
+			local tiles = getCanReachTiles(npc,convertMapPositionToTilePosition(npc.map_, cc.p(npc.enemy_:getPositionX(),npc.enemy_:getPositionY())))
+			local minDuration = 0
+			local targetPos
+			for i,v in ipairs(tiles) do
+				local lengX = npcTiledX - v.x
+					local lengY = npcTiledY - v.y
+					local d = math.abs(lengX) + math.abs(lengY)
+					if minDuration == 0 or minDuration > d then
+						minDuration = d
+						targetPos = v
+					end
+			end
+			npcSearchPath_(npc,targetPos)
 		end
 		--TODO 向目标移动
 		local movePoint = table.remove(npc.oribt_,1)
@@ -101,7 +131,6 @@ end
 
 function getMonsterNextAction(monster)
 	if monster.state_ == npcstate.IDLE then
-		print("npcstate.IDLE")
 		-- TODO 是否有可以接取的任务
 
 		-- TODO 是否需要整修
@@ -114,12 +143,9 @@ function getMonsterNextAction(monster)
 		end
 
 		print("moveInMonsterArea")
-		
-
 		-- TODO 随机移动到可移动的区域
 		return moveInMonsterArea(monster)
 	elseif monster.state_ == npcstate.MOVE then
-		print("npcstate.MOVE")
 		--TODO 是否附近有NPC
 		local action = getEnemyForNpc(monster)
 		if action then
@@ -134,16 +160,17 @@ function getMonsterNextAction(monster)
 				return move(monster,position)
 			end
 		end
-		print("getMonsterNextAction")
 		monster.state_ = npcstate.IDLE
 		return getMonsterNextAction(monster)
 	elseif monster.state_ == npcstate.FIGHT then
+		print("getMonsterNextAction npcstate.FIGHT")
 		--TODO 判断怪物是否已经死亡,死亡后将状态设置为IDLE
 
 		--TODO 判断怪物是否超出攻击范围,超出攻击范围将重新计算路径,再行攻击
 
 		--TODO 判断当前状态决定下一个动作 攻击前摇 ==》攻击 ==》攻击后摇 
 	elseif monster.state_ == npcstate.MOVE_FIGHT then
+		print("getMonsterNextAction npcstate.MOVE_FIGHT")
 		--TODO 判断NPC是否已经死亡,死亡后将状态设置为IDLE
 		--TODO 判断与NPC的距离是否已经到了可以攻击的距离了
 		local targetTiledX = math.modf(monster.enemy_:getPositionX()/monster.map_:getTileSize().width)
@@ -152,9 +179,23 @@ function getMonsterNextAction(monster)
 		local npcTiledY = math.modf(((monster.map_:getMapSize().height * monster.map_:getTileSize().height ) - monster:getPositionY()) / monster.map_:getTileSize().height)
 		if math.abs(npcTiledX - targetTiledX) + math.abs(npcTiledY - targetTiledY) <= monster.attr_.distance then
 			monster.state_ = npcstate.FIGHT
-			return getNpcNextAction(monster)
+			return getMonsterNextAction(monster)
 		else
-			--TODO 修正路径
+			local tiles = getCanReachTiles(monster,convertMapPositionToTilePosition(monster.map_,cc.p(monster.enemy_:getPositionX(),monster.enemy_:getPositionY())))
+			local minDuration = 0
+			local targetPos
+			for i,v in ipairs(tiles) do
+				if canReachForMonster(monster,v) then
+					local lengX = npcTiledX - v.x
+					local lengY = npcTiledY - v.y
+					local d = math.abs(lengX) + math.abs(lengY)
+					if minDuration == 0 or minDuration > d then
+						minDuration = d
+						targetPos = v
+					end
+				end
+			end
+			npcSearchPath_(monster,targetPos)
 		end
 		--TODO 向目标移动
 		local movePoint = table.remove(monster.oribt_,1)
@@ -166,7 +207,7 @@ function getMonsterNextAction(monster)
 		end
 		--TODO 移动到终点以后将状态设置为FIGHT 
 		monster.state_ = npcstate.FIGHT
-		return getNpcNextAction(monster)
+		return getMonsterNextAction(monster)
 	end
 	return nil
 

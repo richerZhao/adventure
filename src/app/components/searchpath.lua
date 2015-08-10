@@ -55,7 +55,6 @@ function npcSearchPath_(npc,targetNode)
 		if nextNode then
 			currentNode = nextNode
 		else
-			dump(currentNode, "currentNode", currentNode)
 			return false
 		end
 	end
@@ -72,12 +71,12 @@ function npcSearchPath_(npc,targetNode)
 	npc.openTable_ = {}
 	npc.closeTable_ = {}
 	npc.oribt_= points
-	npc.state_ = npcstate.MOVE
 	return true
 end
 
 function moveToMonsterArea(npc)
 	local monsterArea = getMonsterAreaWithMonster()
+	print("monsterArea name = "..monsterArea.areaName)
 	npcSearchPath_(npc,monsterArea.tiles[math.random(table.getn(monsterArea.tiles))])
 	npc.state_ = npcstate.MOVE
 	return getNpcNextAction(npc)
@@ -117,10 +116,16 @@ function getEnemyForNpc(npc)
 						targetPos = v
 					end
 				else
-					getCanReachForMonster(npc,convertMapPositionToTilePosition(npc.map_,cc.p(v:getPositionX(),v:getPositionY())))
+					if canReachForMonster(npc,v) then
+						local lengX = npcTiledX - v.x
+						local lengY = npcTiledY - v.y
+						local d = math.abs(lengX) + math.abs(lengY)
+						if minDuration == 0 or minDuration > d then
+							minDuration = d
+							targetPos = v
+						end
+					end
 				end
-
-				
 			end
 
 			if targetPos then
@@ -163,7 +168,7 @@ function searchEnemyForMonster(monster)
 	local childs = monster.map_:getChildByName("playerNode"):getChildren()
 	for i,v in ipairs(childs) do
 		if cc.rectContainsPoint(shape, cc.p(v:getPositionX(),v:getPositionY())) then
-			local tile = getCanReachForMonster(monster,convertMapPositionToTilePosition(monster.map_,cc.p(v:getPositionX(),v:getPositionY())))
+			local tile = convertMapPositionToTilePosition(monster.map_,cc.p(v:getPositionX(),v:getPositionY()))
 			if tile then
 				return v
 			end
@@ -210,17 +215,12 @@ function canReach(npc,tmpPos)
 	return true
 end
 
-function getCanReachForMonster(monster,tmpPos)
-	local tiles = getCanReachTiles(monster,tmpPos)
-	for i,v in ipairs(tiles) do
-		if canReach(monster,v) then
-			local monsterArea = getMonsterAreaWithMonster(monster.areaName)
-			if v.x >= monsterArea.minX and v.x <= monsterArea.maxX and v.y >= monsterArea.minY and v.y <= monsterArea.maxY then
-				return v
-			end
+function canReachForMonster(monster,tmpPos)
+	local monsterArea = getMonsterAreaWithMonster(monster.areaName)
+		if tmpPos.x >= monsterArea.minX and tmpPos.x <= monsterArea.maxX and tmpPos.y >= monsterArea.minY and tmpPos.y <= monsterArea.maxY then
+			return true
 		end
-	end
-	return nil
+	return false
 end
 
 function getCanReachTiles(npc,tmpPos)

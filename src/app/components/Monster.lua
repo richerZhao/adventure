@@ -59,4 +59,11 @@ function Monster:setDirection(direction)
 	end
 end
 
+function Monster:dead()
+	self:stopAllActions()
+	self:runAction(cc.FadeOut:create(1))
+	removeMonster(self)
+end
+
+
 return Monster

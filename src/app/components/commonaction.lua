@@ -1,5 +1,5 @@
 function walk(npc)
-	if npc.status_ ~= npcstatus.STATUS_MOVE then
+	if npc.status_ ~= npcstatus.STATUS_MOVE or npc.status_ ~= npcstatus.STATUS_MOVE_FIGHT or npc.status_ ~= npcstatus.STATUS_MOVE_EVENT then
 		npc:stopAllActions()
 	end
 	local animation = display.newAnimation(npc.walkFrames_, 1/8)
@@ -12,10 +12,20 @@ function idle(npc)
 	if npc.status_ ~= npcstatus.STATUS_IDLE then
 		npc:stopAllActions()
 	end
-	local animation = display.newAnimation(npc.idleFrames_, 1/8)
+	local animation = display.newAnimation(npc.idleFrames_, 1/4)
 	-- animation:setRestoreOriginalFrame(true)	--动画执行完成后还原到初始状态
 	local action =cc.Animate:create(animation)   
 	npc:runAction(cc.RepeatForever:create(action))  
+end
+
+function fight(npc)
+	if npc.status_ ~= npcstatus.STATUS_FIGHT then
+		npc:stopAllActions()
+	end
+	local animation = display.newAnimation(npc.fightFrames_, 1/8)
+	-- animation:setRestoreOriginalFrame(true)	--动画执行完成后还原到初始状态
+	-- local action = cc.Animate:create(animation)   
+	npc:playAnimationOnce(animation,false,nil,0)
 end
 
 function move(npc,position)

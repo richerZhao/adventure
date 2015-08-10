@@ -42,8 +42,8 @@ function Npc:ctor(params)
 	self:setFlippedX(true)
 
 	self.walkFrames_ = display.newFrames(params.playerName.."_walk_1_%02d.png",1,8)
-    self.fightFrames_ = display.newFrames(params.playerName.."_stand_1_%02d.png",1,4)
-    self.idleFrames_ = display.newFrames(params.playerName.."_dance_a_1_%02d.png",1,8)
+    self.idleFrames_ = display.newFrames(params.playerName.."_stand_1_%02d.png",1,4)
+    self.fightFrames_ = display.newFrames(params.playerName.."_dance_a_1_%02d.png",1,8)
 end
 
 function Npc:runAI(map)
@@ -59,6 +59,36 @@ function Npc:setDirection(direction)
 	elseif direction == npcdirect.DIRECTION_LEFT then
 		self:setFlippedX(false)
 	end
+end
+
+function Npc:attack()
+	--敌人是否死亡,或者自己是否死亡
+	local action
+	if  not self.enemy_ or self.enemy_.attr_.hp <= 0 then
+		self.enemy_ = nil
+		return action 
+	end
+	if  not self.enemy_ or self.attr_.hp <= 0 then
+		self.enemy_ = nil
+		return action 
+	end
+
+	if self.state_ == npcstate.FIGHT and (self.status_ == npcstatus.IDLE or self.status_ == npcstatus.FIGHT_START  or self.status_ == npcstatus.FIGHT_MOVE) then
+		fight(self)
+		self.status_ = npcstatus.FIGHT_ACT
+		action = cca.delay(1)
+	elseif self.state_ == npcstate.FIGHT and self.status_ == npcstatus.FIGHT_ACT then
+		--TODO 播放后摇
+		idle(self)
+		self.status_ = npcstatus.FIGHT_END
+		action = cca.delay(1)
+	elseif self.state_ == npcstate.FIGHT and self.status_ == npcstatus.FIGHT_END then
+		--TODO 播放前摇
+		self.status_ = npcstatus.FIGHT_START
+		action = cca.delay(1)
+	end
+	self.enemy_.attr_.hp = self.enemy_.attr_.hp - (self.attr_.attack - self.attr_.defence)
+	return action
 end
 
 return Npc

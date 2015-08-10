@@ -110,7 +110,11 @@ function removeMonster(monster)
 	if index then
 		table.remove(area.monsters,index)
 	end
-	--TODO remove monster from layer
+	if table.getn(area.monsters) <= 0 then
+		monsterManager.areasWithMonster.remove(monster.areaName)
+		monsterManager.areasNoMonster.add(monster.areaName,area)
+	end
+	monsterManager.monsterNode:removeChild(monster, true)
 end
 
 function getMonsterCount()
