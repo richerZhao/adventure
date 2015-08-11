@@ -36,7 +36,7 @@ function getNpcNextAction(npc)
 	elseif npc.state_ == npcstate.MOVE then
 		--TODO 是否有可以领取的任务,有可以领取的任务,领取任务并且将状态置为EVENT
 
-		--TODO 是否附近有怪物
+		--是否附近有怪物
 		local action = getEnemyForNpc(npc)
 		if action then
 			return action
@@ -49,10 +49,12 @@ function getNpcNextAction(npc)
 				return move(npc,position)
 			end
 		end
+		--到达目的地后装状态置为空闲
 		npc.state_ = npcstate.IDLE
 		return getNpcNextAction(npc)
 	elseif npc.state_ == npcstate.FIGHT then
 		print("getNpcNextAction npcstate.FIGHT")
+		--攻击敌人
 		local action = npc:attack()
 		if action then
 			if npc.enemy_ then
@@ -64,15 +66,11 @@ function getNpcNextAction(npc)
 				end
 			end
 			return action
-		else
-			npc.state_ = npcstate.IDLE
-			return getNpcNextAction(npc)
 		end
-		--TODO 判断怪物是否已经死亡,死亡后将状态设置为IDLE
-
-		--TODO 判断怪物是否超出攻击范围,超出攻击范围将重新计算路径,再行攻击
-
-		--TODO 判断当前状态决定下一个动作 攻击前摇 ==》攻击 ==》攻击后摇 
+		-- 判断怪物是否已经死亡,死亡后将状态设置为IDLE
+		npc.state_ = npcstate.IDLE
+		return getNpcNextAction(npc)
+		--判断怪物是否超出攻击范围,超出攻击范围将重新计算路径,再行攻击
 	elseif npc.state_ == npcstate.EVENT then
 		--TODO 判断任务是否已经完成,完成后将状态设置为IDLE
 	elseif npc.state_ == npcstate.MOVE_FIGHT then
