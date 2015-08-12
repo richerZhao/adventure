@@ -10,6 +10,7 @@ end
 
 function Unreach:addUnreachTile(tile)
 	local key = string.format("%s:%s", tile.x,tile.y)
+	print("key="..key)
 	self.unreachTiles_[key]  =  tile
 end
 

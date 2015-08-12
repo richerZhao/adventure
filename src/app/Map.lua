@@ -24,7 +24,8 @@ function Map:init()
     self.height_            = self.data_.size.height
     self.mapName_ 			= self.data_.mapName
     if not self.mapName_ then
-    	self.mapName_ = string.format("map%s.tmx", self.id_)
+    	-- self.mapName_ = string.format("map%s.tmx", self.id_)
+        self.mapName_ = "map2.tmx"
     end
 
     self.bgSprite_          = nil
@@ -44,9 +45,9 @@ function Map:init()
     -- 验证不可到达的路径
     for i, unreach in pairs(self:getObjectsByClassId("unreach")) do
         unreach:validate()
-        if not path:isValid() then
-            echoInfo(string.format("Map:init() - invalid unreach %s", path:getId()))
-            self:removeObject(path)
+        if not unreach:isValid() then
+            echoInfo(string.format("Map:init() - invalid unreach %s", unreach:getId()))
+            self:removeObject(unreach)
         end
     end
 
