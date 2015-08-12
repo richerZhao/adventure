@@ -1,7 +1,7 @@
 -- import("app.components.searchpath")
 -- import("app.components.monsterManager")
 local WorldScene = class("WorldScene", function()
-    return display.newScene("MainScene")
+    return display.newScene("WorldScene")
 end)
 
 function WorldScene:ctor()

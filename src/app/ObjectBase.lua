@@ -41,7 +41,7 @@ end
 
 function ObjectBase:init()
 	--绑定object的行为
-	if not self.behavior_ then return end
+	if not self.behaviors_ then return end
 	local behaviors
 
 	if type(self.behaviors_) == "string" then
@@ -201,6 +201,76 @@ function ObjectBase:unbindMethod(behavior, methodName)
             break
         end
     end
+end
+
+-- 验证是否合法
+function ObjectBase:validate()
+end
+
+-- 验证结果
+function ObjectBase:isValid()
+    return self.valid_
+end
+
+function ObjectBase:getClassId()
+    return self.classId_
+end
+
+function ObjectBase:getIndex()
+    return self.index_
+end
+
+function ObjectBase:getPosition()
+    return self.x_ ,self.y_ 
+end
+
+function ObjectBase:setPosition(x,y)
+    self.x_ ,self.y_ = x,y
+end
+
+function ObjectBase:isViewCreated()
+    return self.sprite_ ~= nil
+end
+
+function ObjectBase:createView(batch, marksLayer, debugLayer)
+    assert(self.batch_ == nil, "ObjectBase:createView() - view already created")
+    self.batch_      = batch
+    self.marksLayer_ = marksLayer
+    self.debugLayer_ = debugLayer
+end
+
+function ObjectBase:removeView()
+    assert(self.batch_ ~= nil, "ObjectBase:removeView() - view not exists")
+    self.batch_      = nil
+    self.marksLayer_ = nil
+    self.debugLayer_ = nil
+end
+
+function ObjectBase:updateView()
+end
+
+-- 
+function ObjectBase:preparePlay()
+end
+
+function ObjectBase:startPlay()
+    self.play_ = true
+end
+
+function ObjectBase:stopPlay()
+    self.play_ = false
+end
+
+function ObjectBase:isPlay()
+    return self.play_
+end
+
+function ObjectBase:hasBehavior(behaviorName)
+    return self.behaviorObjects_ and self.behaviorObjects_[behaviorName] ~= nil
+end
+
+function ObjectBase:getView()
+    return nil
 end
 
 return ObjectBase
