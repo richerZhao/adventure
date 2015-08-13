@@ -1,6 +1,6 @@
 
 local math2d = require("math2d")
-local MapConstants = require("game.map.MapConstants")
+local MapConstants = require("app.MapConstants")
 
 local MapCamera = class("MapCamera")
 
@@ -74,12 +74,12 @@ function MapCamera:setScale(scale)
     local backgroundLayer = self.map_:getBackgroundLayer()
     local batchLayer      = self.map_:getBatchLayer()
     local marksLayer      = self.map_:getMarksLayer()
-    local debugLayer      = self.map_:getDebugLayer()
+    -- local debugLayer      = self.map_:getDebugLayer()
 
     backgroundLayer:setScale(scale)
     batchLayer:setScale(scale)
     marksLayer:setScale(scale)
-    if debugLayer then debugLayer:setScale(scale) end
+    -- if debugLayer then debugLayer:setScale(scale) end
 end
 
 --[[--
@@ -97,21 +97,21 @@ function MapCamera:zoomTo(scale, x, y)
     local backgroundLayer = self.map_:getBackgroundLayer()
     local batchLayer      = self.map_:getBatchLayer()
     local marksLayer      = self.map_:getMarksLayer()
-    local debugLayer      = self.map_:getDebugLayer()
+    -- local debugLayer      = self.map_:getDebugLayer()
 
     transition.removeAction(self.backgroundLayerAction_)
     transition.removeAction(self.batchLayerAction_)
     transition.removeAction(self.marksLayerAction_)
-    if debugLayer then
-        transition.stopTarget(debugLayer)
-    end
+    -- if debugLayer then
+    --     transition.stopTarget(debugLayer)
+    -- end
 
     self.backgroundLayerAction_ = transition.scaleTo(backgroundLayer, {scale = scale, time = MapConstants.ZOOM_TIME})
     self.batchLayerAction_ = transition.scaleTo(batchLayer, {scale = scale, time = MapConstants.ZOOM_TIME})
     self.marksLayerAction_ = transition.scaleTo(marksLayer, {scale = scale, time = MapConstants.ZOOM_TIME})
-    if debugLayer then
-        transition.scaleTo(debugLayer, {scale = scale, time = MapConstants.ZOOM_TIME})
-    end
+    -- if debugLayer then
+    --     transition.scaleTo(debugLayer, {scale = scale, time = MapConstants.ZOOM_TIME})
+    -- end
 
     if type(x) ~= "number" then return end
 
@@ -140,9 +140,9 @@ function MapCamera:zoomTo(scale, x, y)
     })
     transition.moveTo(batchLayer, {x = x, y = y, time = MapConstants.ZOOM_TIME})
     transition.moveTo(marksLayer, {x = x, y = y, time = MapConstants.ZOOM_TIME})
-    if debugLayer then
-        transition.moveTo(debugLayer, {x = x, y = y, time = MapConstants.ZOOM_TIME})
-    end
+    -- if debugLayer then
+    --     transition.moveTo(debugLayer, {x = x, y = y, time = MapConstants.ZOOM_TIME})
+    -- end
 end
 
 --[[--
@@ -181,9 +181,9 @@ function MapCamera:setOffset(x, y, movingSpeed, onComplete)
         transition.stopTarget(self.bgSprite_)
         transition.stopTarget(self.batch_)
         transition.stopTarget(self.marksLayer_)
-        if self.debugLayer_ then
-            transition.stopTarget(self.debugLayer_)
-        end
+        -- if self.debugLayer_ then
+        --     transition.stopTarget(self.debugLayer_)
+        -- end
 
         local cx, cy = self.bgSprite_:getPosition()
         local mtx = cx / movingSpeed
@@ -203,15 +203,15 @@ function MapCamera:setOffset(x, y, movingSpeed, onComplete)
         })
         transition.moveTo(self.batch_, {x = x, y = y, time = movingTime})
         transition.moveTo(self.marksLayer_, {x = x, y = y, time = movingTime})
-        if self.debugLayer_ then
-            transition.moveTo(self.debugLayer_, {x = x, y = y, time = movingTime})
-        end
+        -- if self.debugLayer_ then
+        --     transition.moveTo(self.debugLayer_, {x = x, y = y, time = movingTime})
+        -- end
     else
         self.map_:getBackgroundLayer():setPosition(x, y)
         self.map_:getBatchLayer():setPosition(x, y)
         self.map_:getMarksLayer():setPosition(x, y)
-        local debugLayer = self.map_:getDebugLayer()
-        if debugLayer then debugLayer:setPosition(x, y) end
+        -- local debugLayer = self.map_:getDebugLayer()
+        -- if debugLayer then debugLayer:setPosition(x, y) end
     end
 end
 
@@ -221,6 +221,8 @@ end
 
 ]]
 function MapCamera:moveOffset(offsetX, offsetY)
+    print(string.format("self.offsetX_ =%02d,self.offsetY_=%02d", self.offsetX_ , self.offsetY_))
+    print(string.format("offsetX=%02d,offsetY=%02d", offsetX, offsetY))
     self:setOffset(self.offsetX_ + offsetX, self.offsetY_ + offsetY)
 end
 

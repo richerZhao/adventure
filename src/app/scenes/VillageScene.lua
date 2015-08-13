@@ -18,7 +18,6 @@ function VillageScene:ctor()
     self.uiLayer_ = display.newNode()
     self.uiLayer_:setPosition(0, 0)
     self:addChild(self.uiLayer_)
-
         -- 创建地图对象
     self.map_ = require("app.Map").new(LEVEL_ID) -- 参数：地图ID, 是否是编辑器模式
     self.map_:init()
@@ -56,12 +55,37 @@ function VillageScene:tick(dt)
 end
 
 function VillageScene:onTouch(event, x, y)
+    -- if self.mapRuntime_ then
+        -- 如果正在运行地图，将触摸事件传递到地图
+        -- if self.mapRuntime_:onTouch(event, x, y, map) == true then
+        --     return true
+        -- end
 
-	return true
+        if event == "began" then
+            self.drag = {
+                startX  = x,
+                startY  = y,
+                lastX   = x,
+                lastY   = y,
+                offsetX = 0,
+                offsetY = 0,
+            }
+            return true
+        end
+
+        if event == "moved" then
+            self.drag.offsetX = x - self.drag.lastX
+            self.drag.offsetY = y - self.drag.lastY
+            self.drag.lastX = x
+            self.drag.lastY = y
+            self.map_:getCamera():moveOffset(self.drag.offsetX, self.drag.offsetY)
+
+        else -- "ended" or CCTOUCHCANCELLED
+            self.drag = nil
+        end
+
+        return
+    -- end
 end
-
-
-
-
 
 return VillageScene

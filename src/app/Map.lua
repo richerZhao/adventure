@@ -11,9 +11,12 @@ function Map:ctor(id)
 
     -- TODO 从配置文件中读取
     local data = {
-            size    = {width = CONFIG_SCREEN_WIDTH, height = CONFIG_SCREEN_HEIGHT},
+            size    = {width = 1600, height = 1600},
             objects = {},
         }
+
+    data.objects["unreach:1"] = {}
+    data.objects["organism:1"] = {defineId="organism"}
 
     self.data_ = clone(data)
 end
@@ -36,6 +39,8 @@ function Map:init()
     self.debugLayer_        = nil
     self.objects_ 			= {}
     self.objectsByClass_ 		= {}
+    
+    display.addSpriteFrames("player.plist", "player.png")
     -- 添加地图数据中的对象
     for id, state in pairs(self.data_.objects) do
         local classId = unpack(string.split(id, ":"))
@@ -171,7 +176,7 @@ function Map:createView(parent)
 	-- CCTexture2D:setDefaultAlphaPixelFormat(kCCTexture2DPixelFormat_RGB565)
     -- 此处设置纹理为32位,为了以后加载的图片不失真
     -- CCTexture2D:setDefaultAlphaPixelFormat(kCCTexture2DPixelFormat_RGBA8888)
-    local  map = CCTMXTiledMap:create(self.mapName_)
+    local  map = cc.TMXTiledMap:create(self.mapName_)
     parent:addChild(map, 0, 100)
 
 
@@ -248,6 +253,10 @@ function Map:setAllObjectsZOrder()
             object:updateView()
         end
     end
+end
+
+function Map:getSize()
+    return self.width_,self.height_
 end
 
 return Map

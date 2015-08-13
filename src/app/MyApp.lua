@@ -38,6 +38,7 @@ function MyApp:ctor()
     if saveData then
         GameData=saveData.data
     end
+
     MyApp.super.ctor(self)
 end
 
