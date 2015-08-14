@@ -22,6 +22,7 @@ function VillageScene:ctor()
     self.map_ = require("app.Map").new(LEVEL_ID) -- 参数：地图ID, 是否是编辑器模式
     self.map_:init()
     self.map_:createView(self.mapLayer_)
+    self:playMap()
 end
 
 function VillageScene:onEnter()
@@ -29,12 +30,13 @@ function VillageScene:onEnter()
         return self:onTouch(event.name, event.x, event.y)
     end)
     self.touchLayer_:setTouchEnabled(true)
-    -- self:addNodeEventListener(cc.NODE_ENTER_FRAME_EVENT, handler(self, self.tick))
-    -- self:scheduleUpdate()
+    self:addNodeEventListener(cc.NODE_ENTER_FRAME_EVENT, handler(self, self.tick))
+    self:scheduleUpdate()
 end
 
 function VillageScene:playMap()
-    CCDirector:sharedDirector():setDisplayStats(true)
+    cc.Director:getInstance():setDisplayStats(true)
+    -- cc.Director:sharedDirector()
 
     local camera = self.map_:getCamera()
     camera:setMargin(0, 0, 0, 0)
@@ -44,6 +46,11 @@ function VillageScene:playMap()
     collectgarbage()
     collectgarbage()
 
+        -- 开始执行地图
+    self.mapRuntime_ = require("app.MapRuntime").new(self.map_)
+    self.mapRuntime_:preparePlay()
+    self.mapRuntime_:startPlay()
+    self:addChild(self.mapRuntime_)
 end
 
 function VillageScene:onExit()
@@ -51,7 +58,11 @@ function VillageScene:onExit()
 end
 
 function VillageScene:tick(dt)
-
+    if self.mapRuntime_ then
+        for i=1,1 do
+            self.mapRuntime_:tick(dt)
+        end
+    end
 end
 
 function VillageScene:onTouch(event, x, y)

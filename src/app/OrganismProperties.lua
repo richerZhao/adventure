@@ -7,7 +7,7 @@
 
 local MapConstants = require("app.MapConstants")
 
-local MoveObjectsProperties = {}
+local OrganismProperties = {}
 
 local defines = {}
 
@@ -29,19 +29,19 @@ defines["organism"] = object
 
 ----------------------------------------
 
-function MoveObjectsProperties.getAllIds()
+function OrganismProperties.getAllIds()
     local keys = table.keys(defines)
     table.sort(keys)
     return keys
 end
 
-function MoveObjectsProperties.get(defineId)
-    assert(defines[defineId], string.format("MoveObjectsProperties.get() - invalid defineId %s", tostring(defineId)))
+function OrganismProperties.get(defineId)
+    assert(defines[defineId], string.format("OrganismProperties.get() - invalid defineId %s", tostring(defineId)))
     return clone(defines[defineId])
 end
 
-function MoveObjectsProperties.isExists(defineId)
+function OrganismProperties.isExists(defineId)
     return defines[defineId] ~= nil
 end
 
-return MoveObjectsProperties
+return OrganismProperties

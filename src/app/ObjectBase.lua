@@ -1,17 +1,22 @@
 local BehaviorFactory = require("app.behaviors.BehaviorFactory")
 local ObjectBase = class("ObjectBase")
 
--- ObjectBase.CLASS_INDEX_PATH        = 1
--- ObjectBase.CLASS_INDEX_RANGE       = 2
-ObjectBase.CLASS_INDEX_STATIC      = 3
-ObjectBase.CLASS_INDEX_MOVE        = 4
+-- ObjectBase.CLASS_INDEX_UNREACH        = 1
+ObjectBase.CLASS_INDEX_ORGANISM       = 1
+-- ObjectBase.CLASS_INDEX_STATIC      = 3
+-- ObjectBase.CLASS_INDEX_MOVE        = 4
 
 ObjectBase.CLASS_INDEX = {
-    -- path       = ObjectBase.CLASS_INDEX_PATH,
-    -- range      = ObjectBase.CLASS_INDEX_RANGE,
-    static     = ObjectBase.CLASS_INDEX_STATIC,
-    move       = ObjectBase.CLASS_INDEX_MOVE,
+    -- unreach       = ObjectBase.CLASS_INDEX_UNREACH,
+    organism      = ObjectBase.CLASS_INDEX_ORGANISM,
+    -- static     = ObjectBase.CLASS_INDEX_STATIC,
+    -- move       = ObjectBase.CLASS_INDEX_MOVE,
 }
+
+MOVEDOWN    = 1
+MOVELEFT    = 2
+MOVERIGHT   = 3
+MOVEUP      = 4
 
 function ObjectBase:ctor(id,state,map)
 	assert(type(state) == "table", "ObejctBase:ctor() - invalid state")
@@ -37,6 +42,10 @@ function ObjectBase:ctor(id,state,map)
     self.play_       = false
     self.tag_        = 0
     self.sprite_     = nil
+
+    if type(self.viewZOrdered_) ~= "boolean" then
+        self.viewZOrdered_ = true
+    end
 end
 
 function ObjectBase:init()
@@ -230,6 +239,10 @@ end
 
 function ObjectBase:isViewCreated()
     return self.sprite_ ~= nil
+end
+
+function ObjectBase:isViewZOrdered()
+    return self.viewZOrdered_
 end
 
 function ObjectBase:createView(batch, marksLayer, debugLayer)

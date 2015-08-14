@@ -15,7 +15,6 @@ function Map:ctor(id)
             objects = {},
         }
 
-    data.objects["unreach:1"] = {}
     data.objects["organism:1"] = {defineId="organism"}
 
     self.data_ = clone(data)
@@ -38,7 +37,9 @@ function Map:init()
     self.promptLayer_       = nil
     self.debugLayer_        = nil
     self.objects_ 			= {}
-    self.objectsByClass_ 		= {}
+    self.objectsByClass_ 	= {}
+    self.unreach_           = {}
+    self.npcGenArea_        = {}
     
     display.addSpriteFrames("player.plist", "player.png")
     -- 添加地图数据中的对象
@@ -47,26 +48,29 @@ function Map:init()
         self:newObject(classId, state, id)
     end
 
-    -- 验证不可到达的路径
-    for i, unreach in pairs(self:getObjectsByClassId("unreach")) do
-        unreach:validate()
-        if not unreach:isValid() then
-            echoInfo(string.format("Map:init() - invalid unreach %s", unreach:getId()))
-            self:removeObject(unreach)
-        end
-    end
+    -- -- 验证不可到达的路径
+    -- for i, unreach in pairs(self:getObjectsByClassId("unreach")) do
+    --     unreach:validate()
+    --     if not unreach:isValid() then
+    --         echoInfo(string.format("Map:init() - invalid unreach %s", unreach:getId()))
+    --         self:removeObject(unreach)
+    --     end
+    -- end
 
-    -- 验证其他对象
-    for id, object in pairs(self.objects_) do
-        local classId = object:getClassId()
-        if classId ~= "unreach" then
-            object:validate()
-            if not object:isValid() then
-                echoInfo(string.format("Map:init() - invalid object %s", object:getId()))
-                self:removeObject(object)
-            end
-        end
-    end
+    -- -- 验证其他对象
+    -- for id, object in pairs(self.objects_) do
+    --     local classId = object:getClassId()
+    --     if classId ~= "unreach" then
+    --         object:validate()
+    --         if not object:isValid() then
+    --             echoInfo(string.format("Map:init() - invalid object %s", object:getId()))
+    --             self:removeObject(object)
+    --         end
+    --     end
+    -- end
+
+    self.unreach_ = require("app.Unreach").new()
+
 
     -- 计算地图位移限定值
     self.camera_ = MapCamera.new(self)
@@ -103,6 +107,7 @@ function Map:newObject(classId,state,id)
             -- end
             object:createView(self.batch_, self.marksLayer_, self.debugLayer_)
             object:updateView()
+            
         end
 
         -- if object:hasBehavior("TowerBehavior") then
@@ -132,7 +137,6 @@ function Map:removeObject(object)
     self.objects_[id] = nil
     self.objectsByClass_[object:getClassId()][id] = nil
     if object:isViewCreated() then
-        print("Map:removeObject") 
         object:removeView()
     end
 end
@@ -179,7 +183,6 @@ function Map:createView(parent)
     local  map = cc.TMXTiledMap:create(self.mapName_)
     parent:addChild(map, 0, 100)
 
-
     self.bgSprite_ = map
 
     self.batch_ = display.newNode()
@@ -188,26 +191,48 @@ function Map:createView(parent)
     self.marksLayer_ = display.newNode()
     parent:addChild(self.marksLayer_)
 
+    --初始化不可用的tiles
+    local obstacleLayer = map:getLayer("obstacleLayer")
+    local width = map:getMapSize().width - 1
+    local height = map:getMapSize().height - 1
+    local tile
+    for x=0,width do
+        for y=0,height do
+            tile = cc.p(x,y)
+            local gid = obstacleLayer:getTileGIDAt(tile)
+            if gid and gid > 0 then
+                self.unreach_:addUnreachTile(tile)
+            end
+        end
+    end
+
+    --初始化NPC诞生区域
+    local objectLayer = map:getObjectGroup("npcgenerateLayer")
+    for i=1,1 do
+        local area = {}
+        area.areaName = "npc_gen_point_"..i
+        area.tiles = {}
+        local prop = objectLayer:getObject(area.areaName)
+        local minTileX = math.modf(prop.x/map:getTileSize().width) 
+        local maxTileY = math.modf((map:getMapSize().height * map:getTileSize().height - prop.y)/map:getTileSize().height)
+        local maxTileX = math.modf((prop.x + prop.width)/map:getTileSize().width) 
+        local minTileY = math.modf((map:getMapSize().height * map:getTileSize().height - (prop.y + prop.height))/map:getTileSize().height)
+        for x=minTileX,maxTileX do
+            for y=minTileY,maxTileY do
+                if not self.unreach_:isUnreachTile(cc.p(x,y)) then
+                    table.insert(area.tiles, cc.p(x,y))
+                end
+                
+            end
+        end
+        self.npcGenArea_[area.areaName] = area
+    end
+
     for id, object in pairs(self.objects_) do
         object:createView(self.batch_, self.marksLayer_, self.debugLayer_)
+        local tile = self.npcGenArea_["npc_gen_point_1"].tiles[math.random(table.getn(self.npcGenArea_["npc_gen_point_1"].tiles))]
+        object:setPosition(self:convertTileToMapPosition(tile))
         object:updateView()
-
-        --初始化不可用的tiles
-        if object:getClassId() == "unreach" then
-        	local obstacleLayer = map:getLayer("obstacleLayer")
-        	local width = map:getMapSize().width - 1
-        	local height = map:getMapSize().height - 1
-        	local tile
-        	for x=0,width do
-        		for y=0,height do
-        			tile = cc.p(x,y)
-        			local gid = obstacleLayer:getTileGIDAt(tile)
-					if gid and gid > 0 then
-						object:addUnreachTile(tile)
-					end
-        		end
-        	end
-        end
     end
     self:setAllObjectsZOrder()
 end
@@ -257,6 +282,30 @@ end
 
 function Map:getSize()
     return self.width_,self.height_
+end
+
+function Map:getAllObjects()
+    return self.objects_
+end
+
+function Map:getUnreach()
+    return self.unreach_
+end
+
+--[[--
+
+确认地图是否已经创建了视图
+
+]]
+function Map:isViewCreated()
+    return self.batch_ ~= nil
+end
+
+function Map:convertTileToMapPosition(tile)
+    local map = self:getBackgroundLayer()
+    local x = tile.x * map:getTileSize().width + map:getTileSize().height / 2
+    local y = map:getMapSize().height * map:getTileSize().height - tile.y * map:getTileSize().height - map:getTileSize().height / 2
+    return x,y
 end
 
 return Map

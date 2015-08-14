@@ -1,16 +1,11 @@
-local MoveObjectsProperties = require("app.MoveObjectsProperties")
+local OrganismProperties = require("app.OrganismProperties")
 local ObjectBase = require("app.ObjectBase")
 
 local Organism = class("Organism",ObjectBase)
 
-MOVEDOWN    = 1;
-MOVELEFT    = 2;
-MOVERIGHT   = 3;
-MOVEUP      = 4;
-
 function Organism:ctor(id,state,map)
 	assert(state.defineId ~= nil, "Organism:ctor() - invalid state.defineId")
-	local define = MoveObjectsProperties.get(state.defineId)
+	local define = OrganismProperties.get(state.defineId)
     for k, v in pairs(define) do
         if state[k] == nil then
             state[k] = v
@@ -35,12 +30,9 @@ function Organism:ctor(id,state,map)
     self.isMoveObject = true
     self.actions_ = {}
 
-    dump(self)
-
 end
 
 function Organism:createOrganismSprite(modelName)
-	print(modelName)
     local moveAnimations = {}
     local idleAnimations = {}
     local fightAnimations = {}
@@ -50,12 +42,12 @@ function Organism:createOrganismSprite(modelName)
     self.fightAnimations_ = fightAnimations
    
     local moveFrames = display.newFrames(modelName .. "_walk_1_%02d.png",1,8)
-    local firstFrame = moveFrames[1];
-    local moveAnimation = display.newAnimation(moveFrames,1/8);
+    local firstFrame = moveFrames[1]
+    local moveAnimation = display.newAnimation(moveFrames,1/8)
     local idleFrames = display.newFrames(modelName .. "_stand_1_%02d.png",1,4)
-    local idleAnimation = display.newAnimation(idleFrames,1/4);
+    local idleAnimation = display.newAnimation(idleFrames,1/4)
     local fightFrames = display.newFrames(modelName .. "_dance_a_1_%02d.png",1,8)
-    local fightAnimation = display.newAnimation(fightFrames,1/8);
+    local fightAnimation = display.newAnimation(fightFrames,1/8)
     for i=1,4 do
     	moveAnimation:retain()
     	table.insert(self.moveAnimations_,moveAnimation)
@@ -96,7 +88,7 @@ function Organism:createView(batch, marksLayer, debugLayer)
         self.sprite_:setScale(self.scale_)
     end
 
-    self.offsetY_ = self.spriteSize_[2]/2;
+    -- self.offsetY_ = self.spriteSize_[2]/2;
     self.sprite_:addNodeEventListener(cc.NODE_EVENT, function(event)
         if event.name == "exit" then
             self:release()

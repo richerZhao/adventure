@@ -5,14 +5,7 @@ local ObjectFactory = {}
 --创建一个对象
 function ObjectFactory.newObject(classId, id, state, map)
 	local object
-
-    if classId == "unreach" then
-        object = Unreach.new(id, state, map)
-        object:init()
-        -- if debug then
-        --     object:bindBehavior("StaticObjectEditorBehavior")
-        -- end
-    elseif classId == "organism" then
+    if classId == "organism" then
         object = Organism.new(id, state, map)
         object:init()
     --     -- if debug then

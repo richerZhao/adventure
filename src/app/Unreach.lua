@@ -1,9 +1,8 @@
 local ObjectBase = require("app.ObjectBase")
 
-local Unreach = class("Unreach",ObjectBase)
+local Unreach = class("Unreach")
 
-function Unreach:ctor(id, state, map)
-	Unreach.super.ctor(self, id, state, map)
+function Unreach:ctor()
 	self.valid_            = true
 	self.unreachTiles_ 	   = {}
 end

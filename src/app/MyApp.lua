@@ -10,6 +10,7 @@ import("app.components.ai")
 
 GameState= require(cc.PACKAGE_NAME .. ".cc.utils.GameState")
 scheduler = require("framework.scheduler")
+require("app.GameGlobal")
 import("app.utils.utils")
 GameData={}
 
