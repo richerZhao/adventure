@@ -42,6 +42,8 @@ function ObjectBase:ctor(id,state,map)
     self.play_       = false
     self.tag_        = 0
     self.sprite_     = nil
+    self.preDirection_ = 0
+    self.direction_  = 0
 
     if type(self.viewZOrdered_) ~= "boolean" then
         self.viewZOrdered_ = true
@@ -210,6 +212,22 @@ function ObjectBase:unbindMethod(behavior, methodName)
             break
         end
     end
+end
+
+function ObjectBase:setDirection(direction)
+    self.preDirection_ = self.direction_
+    self.direction_ = direction
+    if self.behaviorObjects_ then 
+        for i,behavior in ipairs(self.behaviorObjects_) do
+            if behavior.onDirectionChange then
+                behavior.onDirectionChange(self)
+            end
+        end
+    end
+end
+
+function ObjectBase:getDirection()
+    return self.direction_
 end
 
 -- 验证是否合法

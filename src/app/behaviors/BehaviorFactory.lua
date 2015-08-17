@@ -2,6 +2,8 @@ local BehaviorFactory = {}
 
 local behaviorsClass = {
     MoveableBehavior          = require("app.behaviors.MoveableBehavior"),
+    AttackBehavior            = require("app.behaviors.AttackBehavior"),
+    IdleBehavior            = require("app.behaviors.IdleBehavior"),
     -- CampBehavior               = require("game.map.behaviors.CampBehavior"),
     -- DecorateBehavior           = require("game.map.behaviors.DecorateBehavior"),
     -- BuildingBehavior           = require("game.map.behaviors.BuildingBehavior"),

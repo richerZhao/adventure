@@ -8,23 +8,20 @@ function MoveableBehavior:ctor()
 	MoveableBehavior.super.ctor(self,"MoveableBehavior",nil,1)
 end
 
-function MovableBehavior:getMoveDirection(object)
-    local x1,y1,x2,y2 =  object.x_, object.y_, object.nextX_, object.nextY_;
-    local x = math.abs(x1 - x2);
-    local y = math.abs(y1 - y2);
-    if x > y then
-        if x1 > x2 then
-            return MOVELEFT; 
-        else
-            return MOVERIGHT; 
-        end
-    else
-        if y1 < y2 then
-            return MOVEUP; 
-        else
-            return MOVEDOWN; 
-        end
-    end
+function MoveableBehavior:onDirectionChange(object)
+	if object:isMoving() then
+		if object.preDirection_ == object.direction_ then return end
+		transition.removeAction(object.moveAction_)
+		object.moveAction_ = nil
+		if object.direction_ == MOVEDOWN then
+		elseif object.direction_ == MOVELEFT then
+			object.sprite_:setFlippedX(true)
+		elseif object.direction_ == MOVERIGHT then
+			object.sprite_:setFlippedX(false)
+		elseif object.direction_ == MOVEUP then
+		end
+		object.moveAction_ = object.sprite_:playAnimationForever(self.moveAnimations_[object.direction_])
+	end
 end
 
 function MoveableBehavior:bind(object)
@@ -33,19 +30,29 @@ function MoveableBehavior:bind(object)
 	object.paths_				 		= nil	--寻路的路径点
 	object.pathIndex_				 	= 0		--当前的路径点序号
 	object.moveAction_				 	= nil	--移动动作
-	object.moveFrames_				 	= nil	--移动帧
-	object.direction_					= 0
+	object.moveAnimations_				= nil	--动画
+	object.preDirection_				= 0
 
+	--初始化移动动作
+	object.moveAnimations_ = {}
+	local moveFrames = display.newFrames(object.modelName_ .. "_walk_1_%02d.png",1,8)
+	local animation = display.newAnimation(moveFrames,1/8)
+	for i=1,4 do
+		animation:retain()
+    	table.insert(object.moveAnimations_,animation)
+    end
 
 	local function isMoving(object)
-		return object.moveState_ == MoveableBehavior.MOVING_STATE_MOVED
+		if not object.paths_ then return false end
+		if not object.paths_[object.pathIndex_] then return false end
+		if object.moveState_ == MoveableBehavior.MOVING_STATE_STOPED then return false end
+		return true
 	end
 	object:bindMethod(self, "isMoving", isMoving)
 
 	local function startMove(object)
 		object.moveState_ = MoveableBehavior.MOVING_STATE_MOVED
-		local animation = display.newAnimation(object.moveFrames_,1/8)
-		object.moveAction_ = transition.playAnimationForever(animation)
+		object.moveAction_ = object.sprite_:playAnimationForever(object.moveAnimations_[object.direction_])
 	end
 	object:bindMethod(self, "startMove", startMove)
 
@@ -55,87 +62,111 @@ function MoveableBehavior:bind(object)
 		object.pathIndex_ = 0
 		if object.moveAction_ then
 			transition.removeAction(object.moveAction_)
+			object.moveAction_ = nil
 		end
 	end
 	object:bindMethod(self, "stopMove", stopMove)
 
-	local function onDirectionChange(object)
-		transition.removeAction(object.moveAction_)
-		if object.direction_ == MOVEDOWN then
-		elseif object.direction_ == MOVELEFT then
-		elseif object.direction_ == MOVERIGHT then
-		elseif object.direction_ == MOVEUP then
-		end
-
-	end
-
 	local function tick(object, dt)
-		if object.moveState_ == MoveableBehavior.MOVING_STATE_STOPPED then return end
-		if not object.paths_ then return end
-		local path = object.paths_[object.pathIndex_]
-		if not path then
-			stopMove(object)
-			return 
-		end
-
-		local moveDis = object.speed_ * dt
-		local duration
-		while moveDis > 0 do
-			if object.x_ == path.x and object.y_ == path.y then
-				object.pathIndex_ = object.pathIndex_ + 1
-				path = object.pathIndex_[object.pathIndex_]
-				if not path then
-					stopMove(object)
-					return
-				end
-			else
-				if object.x_ ~= path.x then
-					duration = math.abs(object.x_ - path.x)
-					if duration >= moveDis then
-						if object.x_ < path.x then
-							object.direction_ == MOVERIGHT
-							object.x_ = object.x_ + moveDis
-						else
-							object.direction_ == MOVELEFT
-							object.x_ = object.x_ - moveDis
-						end
-					else
-						
-					end
-				elseif object.y_ ~= path.y then
-					if object.x_ < path.x then
-
-					else
-
-					end
-				else
-					--todo
-				end
-			end
-			
-
-		end
-
-		
-
-
-
-
-
-
-
-
-
+		if not object.play_ or not object:isMoving() then return end
+		local x,y,direction,pathIndex = object:getFuturePosition(dt)
+		object:setPosition(x, y)
+		object:setDirection(direction)
+		object:setPathIndex(pathIndex)
 	end
 	object:bindMethod(self, "tick", tick)
 
+    local function getFuturePosition(object, time)
+        local x, y, direction, pathIndex = object.x_, object.y_, object.direction_, object.pathIndex_
+        local path = object.paths_[pathIndex]
+		if not path then return x, y, direction, pathIndex end
 
-	
-	
+		local moveDis = object.speed_ * time
+		local duration
+		while moveDis > 0 do
+			if x == path.x and y == path.y then
+				pathIndex = pathIndex + 1
+				path = object.paths_[pathIndex]
+				if not path then return x, y, direction, pathIndex end
+			else
+				if x ~= path.x then
+					duration = math.abs(x - path.x)
+					if duration >= moveDis then
+						if x < path.x then
+							direction = MOVERIGHT
+							x = x + moveDis
+						else
+							direction = MOVELEFT
+							x = x - moveDis
+						end
+						moveDis = 0
+					else
+						if x < path.x then
+							direction = MOVERIGHT
+							x = x + duration
+						else
+							direction = MOVELEFT
+							x = x - duration
+						end
+						moveDis = moveDis - duration
+					end
+				else
+					duration = math.abs(y - path.y)
+					if duration >= moveDis then
+						if y < path.y then
+							direction = MOVEUP
+							y = y + moveDis
+						else
+							direction = MOVEDOWN
+							y = y - moveDis
+						end
+						moveDis = 0
+					else
+						if y < path.y then
+							direction = MOVEUP
+							y = y + duration
+						else
+							direction = MOVEDOWN
+							y = y - duration
+						end
+						moveDis = moveDis - duration
+					end
+					
+				end
+			end
+		end
+        return x, y, direction, pathIndex
+    end
+    object:bindMethod(self, "getFuturePosition", getFuturePosition)
+
+    local function setPath(object,paths)		
+		object.paths_ = paths
+		object.pathIndex_ = 1
+    end
+    object:bindMethod(self, "setPath", setPath)
+
+    local function setPathIndex(object,pathIndex)
+    	object.pathIndex_ = pathIndex
+    end
+    object:bindMethod(self, "setPathIndex", setPathIndex)
+
+    self:reset(object)
 end
 
 function MoveableBehavior:unbind(object)
+	self:reset(object)
+	for i,v in ipairs(object.moveAnimations_) do
+		v:release()
+	end
+	object.moveAnimations_ = nil
 
+	object:unbindMethod(self, "isMoving")
+	object:unbindMethod(self, "startMove")
+	object:unbindMethod(self, "stopMove")
+	object:unbindMethod(self, "tick")
+	object:unbindMethod(self, "getFuturePosition")
+	object:unbindMethod(self, "setPath")
+	object:unbindMethod(self, "setPathIndex")
 end
 
 function MoveableBehavior:reset(object)
@@ -143,7 +174,7 @@ function MoveableBehavior:reset(object)
 	object.moveState_ 					= MOVING_STATE_STOPPED
 	object.paths_				 		= nil
 	object.pathIndex_				 	= 0
-	object.direction_					= 0
+	object.moveAction_					= nil
 end
 
 

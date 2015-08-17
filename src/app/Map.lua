@@ -231,6 +231,7 @@ function Map:createView(parent)
     for id, object in pairs(self.objects_) do
         object:createView(self.batch_, self.marksLayer_, self.debugLayer_)
         local tile = self.npcGenArea_["npc_gen_point_1"].tiles[math.random(table.getn(self.npcGenArea_["npc_gen_point_1"].tiles))]
+        -- local x,y = self:convertTileToMapPosition(tile)
         object:setPosition(self:convertTileToMapPosition(tile))
         object:updateView()
     end

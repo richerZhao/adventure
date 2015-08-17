@@ -1,4 +1,4 @@
-local MapConstants = require("app.MapConstants")
+ local MapConstants = require("app.MapConstants")
 
 local MapRuntime = class("MapRuntime",function()
     return display.newNode()
@@ -55,6 +55,8 @@ function MapRuntime:startPlay()
 
     for id, object in pairs(self.map_:getAllObjects()) do
         object:startPlay()
+        object:startAttack()
+        -- object:setPath({{x=48,y=1008},{x=48,y=976},{x=80,y=976},{x=112,y=976},{x=144,y=976},{x=176,y=976}})
         object.updated__ = true
 
         -- if object.classIndex_ == CLASS_INDEX_STATIC and object:hasBehavior("TowerBehavior") then

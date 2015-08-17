@@ -33,30 +33,10 @@ function Organism:ctor(id,state,map)
 end
 
 function Organism:createOrganismSprite(modelName)
-    local moveAnimations = {}
-    local idleAnimations = {}
-    local fightAnimations = {}
     self:release()
-    self.moveAnimations_ = moveAnimations
-    self.idleAnimations_ = idleAnimations
-    self.fightAnimations_ = fightAnimations
    
     local moveFrames = display.newFrames(modelName .. "_walk_1_%02d.png",1,8)
     local firstFrame = moveFrames[1]
-    local moveAnimation = display.newAnimation(moveFrames,1/8)
-    local idleFrames = display.newFrames(modelName .. "_stand_1_%02d.png",1,4)
-    local idleAnimation = display.newAnimation(idleFrames,1/4)
-    local fightFrames = display.newFrames(modelName .. "_dance_a_1_%02d.png",1,8)
-    local fightAnimation = display.newAnimation(fightFrames,1/8)
-    for i=1,4 do
-    	moveAnimation:retain()
-    	table.insert(self.moveAnimations_,moveAnimation)
-    	idleAnimation:retain()
-    	table.insert(self.idleAnimations_,idleAnimation)
-    	fightAnimation:retain()
-    	table.insert(self.fightAnimations_,fightAnimation)
-    end
-
     return display.newSprite(firstFrame)
 
 end
@@ -94,35 +74,12 @@ function Organism:createView(batch, marksLayer, debugLayer)
             self:release()
         end
     end)
-    batch:addChild(self.sprite_);
-    self:setDirection(MOVEDOWN);
+    batch:addChild(self.sprite_)
+    self:setDirection(MOVEDOWN)
 end
 
 function Organism:release()
-    if self.moveAnimations_ then
-        for i,v in ipairs(self.moveAnimations_) do
-            if v then
-                v:release();
-            end
-        end
-        self.moveAnimations_ = nil;
-    end
-    if self.idleAnimation_ then
-        for i,v in ipairs(self.idleAnimation_) do
-            if v then
-                v:release();
-            end
-        end
-        self.idleAnimation_ = nil;
-    end
-    if self.fightAnimation_ then
-        for i,v in ipairs(self.fightAnimation_) do
-            if v then
-                v:release();
-            end
-        end
-        self.fightAnimation_ = nil;
-    end
+
 end
 
 function Organism:updateView()

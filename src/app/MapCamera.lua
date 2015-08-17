@@ -221,8 +221,6 @@ end
 
 ]]
 function MapCamera:moveOffset(offsetX, offsetY)
-    print(string.format("self.offsetX_ =%02d,self.offsetY_=%02d", self.offsetX_ , self.offsetY_))
-    print(string.format("offsetX=%02d,offsetY=%02d", offsetX, offsetY))
     self:setOffset(self.offsetX_ + offsetX, self.offsetY_ + offsetY)
 end
 

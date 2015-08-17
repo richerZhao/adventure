@@ -21,8 +21,8 @@ local object = {
     radiusOffsetY = 30,
     framesTime    = 0.25,
     scale         = 0.4,
-    -- behaviors     = {"NPCBehavior"},
-    behaviors     = {},
+    idleLastTime  = 1.5,
+    behaviors     = {"AttackBehavior"},
 }
 
 defines["organism"] = object
