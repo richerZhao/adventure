@@ -22,7 +22,10 @@ local object = {
     framesTime    = 0.25,
     scale         = 0.4,
     idleLastTime  = 1.5,
-    behaviors     = {"AttackBehavior"},
+    hpSpriteOffsetY  = 32,
+    maxHp         = 100,
+    campId        = 1,
+    behaviors     = {"MoveableBehavior"},
 }
 
 defines["organism"] = object

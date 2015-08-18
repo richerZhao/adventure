@@ -7,7 +7,7 @@ AttackBehavior.ATTACK_STATE_STOPED = 2
 
 
 function AttackBehavior:ctor()
-	AttackBehavior.super.ctor(self,"AttackBehavior",{"IdleBehavior"},2)
+	AttackBehavior.super.ctor(self,"AttackBehavior",{"IdleBehavior","LifeBehavior"},2)
 end
 
 function AttackBehavior:onDirectionChange(object)
@@ -23,7 +23,6 @@ function AttackBehavior:onDirectionChange(object)
 		elseif object.direction_ == MOVEUP then
 		end
 		local animation = display.newAnimation(object.attackFrames_[object.direction_],1/8)
-		animation:setRestoreOriginalFrame(true)
     	object.attackAction_ = object.sprite_:playAnimationOnce(animation,false,function ()
     		--TODO 完成攻击后切换状态,空闲或者停止
     		object.attackState_ = AttackBehavior.ATTACK_STATE_IDLE
@@ -53,10 +52,8 @@ function AttackBehavior:bind(object)
     object:bindMethod(self, "isAttacking", isAttacking)
 
     local function startAttack(object)
-    	print("startAttack")
     	object.attackState_ = AttackBehavior.ATTACK_STATE_START
     	local animation = display.newAnimation(object.attackFrames_[object.direction_],1/8)
-    	animation:setRestoreOriginalFrame(true)
     	object.attackAction_ = object.sprite_:playAnimationOnce(animation,false,function ()
     		--TODO 完成攻击后切换状态,空闲或者停止
     		object.attackState_ = AttackBehavior.ATTACK_STATE_IDLE
@@ -67,7 +64,6 @@ function AttackBehavior:bind(object)
     object:bindMethod(self, "startAttack", startAttack)
 
     local function stopAttack(object)
-    	print("stopAttack")
     	object.attackState_ = AttackBehavior.ATTACK_STATE_STOPED
     	object.enemy_ = nil
     	object.idleTime_ = 0
@@ -90,6 +86,7 @@ function AttackBehavior:bind(object)
     		object.idleTime_ = 0
     		object:stopIdle()
     		object:startAttack()
+            object:decreaseHp(1)
     	end
     end
     object:bindMethod(self, "tick", tick)

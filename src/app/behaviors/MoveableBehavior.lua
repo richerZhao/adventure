@@ -5,7 +5,7 @@ MoveableBehavior.MOVING_STATE_STOPPED   = 0
 MoveableBehavior.MOVING_STATE_MOVED   	= 1
 
 function MoveableBehavior:ctor()
-	MoveableBehavior.super.ctor(self,"MoveableBehavior",nil,1)
+	MoveableBehavior.super.ctor(self,"MoveableBehavior",{"SearchPathBehavior"},2)
 end
 
 function MoveableBehavior:onDirectionChange(object)

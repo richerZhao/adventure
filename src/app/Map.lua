@@ -42,6 +42,8 @@ function Map:init()
     self.npcGenArea_        = {}
     
     display.addSpriteFrames("player.plist", "player.png")
+    display.addSpriteFrames("SheetMapBattle.plist", "SheetMapBattle.png")
+    
     -- 添加地图数据中的对象
     for id, state in pairs(self.data_.objects) do
         local classId = unpack(string.split(id, ":"))
@@ -307,6 +309,62 @@ function Map:convertTileToMapPosition(tile)
     local x = tile.x * map:getTileSize().width + map:getTileSize().height / 2
     local y = map:getMapSize().height * map:getTileSize().height - tile.y * map:getTileSize().height - map:getTileSize().height / 2
     return x,y
+end
+
+function Map:convertMapPositionToTile(mapPosition)
+    dump(mapPosition, "mapPosition", mapPosition)
+    local map = self:getBackgroundLayer()
+    local x  = math.modf(mapPosition.x/map:getTileSize().width)
+    local y = math.modf(((map:getMapSize().height * map:getTileSize().height ) - mapPosition.y) / map:getTileSize().height)
+    return cc.p(x,y)
+end
+
+function Map:getCanReachTiles(targetPosition)
+    return self:getCanReachTiles_(self:convertMapPositionToTile(targetPosition))
+end
+
+function Map:getCanReachTiles_(targetPosition)
+    local map = self:getBackgroundLayer()
+    local maxX = map:getMapSize().width - 1
+    local maxY = map:getMapSize().height - 1
+    local tiles = {}
+    if targetPosition.x + 1 <= maxX then
+        --右边
+        if self:canReach_({x=targetPosition.x + 1, y=targetPosition.y}) then
+            table.insert(tiles, {x=targetPosition.x + 1, y=targetPosition.y})
+        end
+    end
+    
+    if targetPosition.x - 1 >= 0 then
+        --左边
+        if self:canReach_({x=targetPosition.x - 1, y=targetPosition.y}) then
+            table.insert(tiles, {x=targetPosition.x - 1, y=targetPosition.y})
+        end
+    end
+
+    if targetPosition.y - 1 >= 0 then
+        --上边
+        if self:canReach_({x=targetPosition.x, y=targetPosition.y - 1}) then
+            table.insert(tiles, {x=targetPosition.x, y=targetPosition.y - 1})
+        end
+    end
+
+    if targetPosition.y + 1 <= maxY then
+        --下边
+        if self:canReach_({x=targetPosition.x, y=targetPosition.y + 1}) then
+            table.insert(tiles, {x=targetPosition.x, y=targetPosition.y + 1})
+        end
+    end
+    return tiles
+end
+
+function Map:canReach(targetPosition)
+    return self:canReach_(self:convertMapPositionToTile(targetPosition))
+end
+
+function Map:canReach_(targetPosition)
+    if self.unreach_:isUnreachTile(targetPosition) then return false end
+    return true
 end
 
 return Map

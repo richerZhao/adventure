@@ -25,12 +25,15 @@ function BehaviorBase:getConflictions()
 end
 
 function BehaviorBase:bind(object)
+	
 end
 
 function BehaviorBase:unbind(object)
+	
 end
 
 function BehaviorBase:reset(object)
+	
 end
 
 return BehaviorBase

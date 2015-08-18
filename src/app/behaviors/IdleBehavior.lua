@@ -21,21 +21,20 @@ function IdleBehavior:onDirectionChange(object)
 			object.sprite_:setFlippedX(false)
 		elseif object.direction_ == MOVEUP then
 		end
-		object.idleAction_ = object.sprite_:playAnimationForever(object.idleAnimations_[object.direction_])
+		local idleAnimation = display.newAnimation(object.idleFrames_[object.direction_],1/4)
+		object.idleAction_ = object.sprite_:playAnimationForever(idleAnimation)
 	end
 end
 
 function IdleBehavior:bind(object)
 	object.idleState_ 						= 0
 	object.idleAction_				 		= nil	--攻击动作
-	object.idleAnimations_					= nil	--动画
+	object.idleFrames_						= nil	--动画
 
-	object.idleAnimations_ = {}
+	object.idleFrames_ = {}
 	local idleFrames = display.newFrames(object.modelName_ .. "_stand_1_%02d.png",1,4)
-    local idleAnimation = display.newAnimation(idleFrames,1/4)
     for i=1,4 do
-    	idleAnimation:retain()
-    	table.insert(object.idleAnimations_, idleAnimation)
+    	table.insert(object.idleFrames_, idleFrames)
     end
 
     local function isIdle(object)
@@ -44,17 +43,16 @@ function IdleBehavior:bind(object)
     object:bindMethod(self, "isIdle", isIdle)
 
     local function startIdle(object)
-    	print("startIdle")
     	object.idleState_ = IdleBehavior.IDLE_STATE_START
-    	object.idleAction_ = object.sprite_:playAnimationForever(object.idleAnimations_[object.direction_])
+    	local idleAnimation = display.newAnimation(object.idleFrames_[object.direction_],1/4)
+		object.idleAction_ = object.sprite_:playAnimationForever(idleAnimation)
     end
     object:bindMethod(self, "startIdle", startIdle)
 
     local function stopIdle(object)
-    	print("stopIdle")
     	object.idleState_ = IdleBehavior.IDLE_STATE_STOPED
     	if object.idleAction_ then
-    		transition.removeAction(action)
+    		object.sprite_:stopAction(object.idleAction_)
     		object.idleAction_ = nil
     	end
     end
@@ -64,10 +62,7 @@ function IdleBehavior:bind(object)
 end
 
 function IdleBehavior:unbind(object)
-	for i,v in ipairs(object.idleAnimations_) do
-		v:release()
-	end
-	object.idleAnimations_ = nil
+	object.idleFrames_ = nil
 
 	object:unbindMethod(self, "isIdle")
 	object:unbindMethod(self, "startIdle")

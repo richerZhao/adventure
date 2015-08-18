@@ -18,7 +18,7 @@ MapConstants.SET_FAST_TRACKING_DIST = display.height / 3
 
 MapConstants.CROSS_POINT_TAP_RADIUS = 50
 MapConstants.HP_BAR_ZORDER          = 30000
-MapConstants.HP_BAR_OFFSET_Y        = 20
+-- MapConstants.HP_BAR_OFFSET_Y        = 20
 MapConstants.RADIUS_CIRCLE_SCALE_Y  = 0.85
 
 MapConstants.LEVEL_LABEL_OFFSET_Y   = 26
