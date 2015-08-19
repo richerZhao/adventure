@@ -30,6 +30,7 @@ function IdleBehavior:bind(object)
 	object.idleState_ 						= 0
 	object.idleAction_				 		= nil	--攻击动作
 	object.idleFrames_						= nil	--动画
+	object.idleTime_						= 0		--空闲时间
 
 	object.idleFrames_ = {}
 	local idleFrames = display.newFrames(object.modelName_ .. "_stand_1_%02d.png",1,4)
@@ -54,9 +55,27 @@ function IdleBehavior:bind(object)
     	if object.idleAction_ then
     		object.sprite_:stopAction(object.idleAction_)
     		object.idleAction_ = nil
+    		object.idleTime_ = 0
     	end
     end
     object:bindMethod(self, "stopIdle", stopIdle)
+
+    local function clearIdleTime(object)
+    	object.idleTime_ = 0
+    end
+    object:bindMethod(self, "clearIdleTime", clearIdleTime)
+
+    local function getIdleTime(object)
+    	return object.idleTime_
+    end
+    object:bindMethod(self, "getIdleTime", getIdleTime)
+
+    local function tick(object,dt)
+    	if object.idleState_ == IdleBehavior.IDLE_STATE_START then 
+    		object.idleTime_ = object.idleTime_ + dt
+    	end
+    end
+    object:bindMethod(self, "tick", tick)
 
     self:reset(object)
 end
@@ -67,11 +86,15 @@ function IdleBehavior:unbind(object)
 	object:unbindMethod(self, "isIdle")
 	object:unbindMethod(self, "startIdle")
 	object:unbindMethod(self, "stopIdle")
+	object:unbindMethod(self, "clearIdleTime")
+	object:unbindMethod(self, "getIdleTime")
+	object:unbindMethod(self, "tick")
 end
 
 function IdleBehavior:reset(object)
 	object.idleState_ = IdleBehavior.IDLE_STATE_STOPED
 	object.idleAction_	= nil
+	object.idleTime_ = 0
 end
 
 return IdleBehavior

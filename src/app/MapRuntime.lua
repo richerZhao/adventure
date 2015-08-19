@@ -55,8 +55,7 @@ function MapRuntime:startPlay()
 
     for id, object in pairs(self.map_:getAllObjects()) do
         object:startPlay()
-        object:setPath(object:searchPath(cc.p(176,976)))
-        object:startMove()
+        object:startRunAI()
         -- object:setPath({{x=48,y=1008},{x=48,y=976},{x=80,y=976},{x=112,y=976},{x=144,y=976},{x=176,y=976}})
         object.updated__ = true
 

@@ -87,7 +87,6 @@ function LifeBehavior:bind(object)
     object:bindMethod(self, "checkLifeState", checkLifeState)
 
     local function createView(object, batch, marksLayer, debugLayer)
-    	print("LifeBehavior.createView")
         object.hpOutlineSprite_ = display.newSprite(string.format("#ObjectHpOutline.png"))
         object.hpOutlineSprite_:align(display.LEFT_CENTER, 0, 0)
         batch:addChild(object.hpOutlineSprite_, MapConstants.HP_BAR_ZORDER)
@@ -111,7 +110,6 @@ function LifeBehavior:bind(object)
     object:bindMethod(self, "removeView", removeView, true)
 
     local function updateView(object)
-    	print("LifeBehavior.updateView")
         object.hp__ = object.hp_
         if object.hp_ > 0 then
             local x, y = object.x_, object.y_

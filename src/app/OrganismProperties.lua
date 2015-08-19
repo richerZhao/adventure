@@ -25,7 +25,8 @@ local object = {
     hpSpriteOffsetY  = 32,
     maxHp         = 100,
     campId        = 1,
-    behaviors     = {"MoveableBehavior"},
+    genAreaName   = "npc_gen_point_1",
+    behaviors     = {"NpcBehavior"},
 }
 
 defines["organism"] = object

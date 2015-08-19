@@ -5,7 +5,7 @@ MoveableBehavior.MOVING_STATE_STOPPED   = 0
 MoveableBehavior.MOVING_STATE_MOVED   	= 1
 
 function MoveableBehavior:ctor()
-	MoveableBehavior.super.ctor(self,"MoveableBehavior",{"SearchPathBehavior"},2)
+	MoveableBehavior.super.ctor(self,"MoveableBehavior",nil,1)
 end
 
 function MoveableBehavior:onDirectionChange(object)
@@ -15,12 +15,13 @@ function MoveableBehavior:onDirectionChange(object)
 		object.moveAction_ = nil
 		if object.direction_ == MOVEDOWN then
 		elseif object.direction_ == MOVELEFT then
-			object.sprite_:setFlippedX(true)
-		elseif object.direction_ == MOVERIGHT then
 			object.sprite_:setFlippedX(false)
+		elseif object.direction_ == MOVERIGHT then
+			object.sprite_:setFlippedX(true)
 		elseif object.direction_ == MOVEUP then
 		end
-		object.moveAction_ = object.sprite_:playAnimationForever(self.moveAnimations_[object.direction_])
+		local animation = display.newAnimation(object.moveFrames_[object.direction_],1/8)
+		object.moveAction_ = object.sprite_:playAnimationForever(animation)
 	end
 end
 
@@ -30,16 +31,13 @@ function MoveableBehavior:bind(object)
 	object.paths_				 		= nil	--寻路的路径点
 	object.pathIndex_				 	= 0		--当前的路径点序号
 	object.moveAction_				 	= nil	--移动动作
-	object.moveAnimations_				= nil	--动画
-	object.preDirection_				= 0
+	object.moveFrames_					= nil	--动画
 
 	--初始化移动动作
-	object.moveAnimations_ = {}
+	object.moveFrames_ = {}
 	local moveFrames = display.newFrames(object.modelName_ .. "_walk_1_%02d.png",1,8)
-	local animation = display.newAnimation(moveFrames,1/8)
 	for i=1,4 do
-		animation:retain()
-    	table.insert(object.moveAnimations_,animation)
+    	table.insert(object.moveFrames_,moveFrames)
     end
 
 	local function isMoving(object)
@@ -52,7 +50,11 @@ function MoveableBehavior:bind(object)
 
 	local function startMove(object)
 		object.moveState_ = MoveableBehavior.MOVING_STATE_MOVED
-		object.moveAction_ = object.sprite_:playAnimationForever(object.moveAnimations_[object.direction_])
+		if object:getDirection() > 0 then
+			local animation = display.newAnimation(object.moveFrames_[object.direction_],1/8)
+			object.moveAction_ = object.sprite_:playAnimationForever(animation)
+		end
+		
 	end
 	object:bindMethod(self, "startMove", startMove)
 
@@ -73,6 +75,7 @@ function MoveableBehavior:bind(object)
 		object:setPosition(x, y)
 		object:setDirection(direction)
 		object:setPathIndex(pathIndex)
+		if object.pathIndex_ > #object.paths_ then object:stopMove() end
 	end
 	object:bindMethod(self, "tick", tick)
 
@@ -154,11 +157,7 @@ function MoveableBehavior:bind(object)
 end
 
 function MoveableBehavior:unbind(object)
-	self:reset(object)
-	for i,v in ipairs(object.moveAnimations_) do
-		v:release()
-	end
-	object.moveAnimations_ = nil
+	object.moveFrames_ = nil
 
 	object:unbindMethod(self, "isMoving")
 	object:unbindMethod(self, "startMove")

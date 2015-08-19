@@ -9,7 +9,13 @@ function SearchPathBehavior:bind(object)
 	local function searchPath(object,targetPos)
 		local current = object.map_:convertMapPositionToTile(cc.p(object:getPosition()))
 		local target = object.map_:convertMapPositionToTile(targetPos)
-		object:searchPath_(current,target)
+		local tiles = object:searchPath_(current,target)
+		if tiles == nil then return end
+		local points = {}
+		for i,v in ipairs(tiles) do
+			table.insert(points, cc.p(object.map_:convertTileToMapPosition(v)))
+		end
+		return points
 	end
 	object:bindMethod(self, "searchPath", searchPath)
 
@@ -30,7 +36,7 @@ function SearchPathBehavior:bind(object)
 		table.insert(openTable_, {x=currentPos.x,y=currentPos.y,g=0,h=0,f=0})
 		local currentNode = table.remove(openTable_,1)
 		table.insert(closeTable_, currentNode)
-		local canReachTiles = object.map_:getCanReachTiles(currentNode)
+		local canReachTiles = object.map_:getCanReachTiles_(currentNode)
 		for i,v in ipairs(canReachTiles) do
 			v.parent = currentNode
 			v.g = v.parent.g + getGScore()
@@ -41,7 +47,7 @@ function SearchPathBehavior:bind(object)
 		while not (targetPos.x == currentNode.x and targetPos.y == currentNode.y) do
 			if not isInCloseTable(closeTable_,currentNode) then
 				--更新OPENTABLE的FScore
-				canReachTiles = object.map_:getCanReachTiles(currentNode)
+				canReachTiles = object.map_:getCanReachTiles_(currentNode)
 				for i,v in ipairs(canReachTiles) do
 					local index = getIndexFromOpenTable(openTable_,v)
 					if index then

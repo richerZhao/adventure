@@ -22,7 +22,6 @@ function Organism:ctor(id,state,map)
     self.valid_         = true
     self.sprite_        = nil
     self.spriteSize_    = nil
-    self.direction_     = nil
     -- self.framesTime_    =0.8
     -- if self.direction_ == nil then
         -- self.direction_ = MOVEDOWN;
@@ -41,17 +40,17 @@ function Organism:createOrganismSprite(modelName)
 
 end
 
-function Organism:setDirection(direction)
-    if direction ~= self.direction_ and direction <=4 and direction>=1 then
-        -- if self.sprite_ then
-        --    self:playAnimationForever(direction);
-        --    -- self.sprite_:stopAllActions();
-        --    -- self.sprite_:playAnimationForever(self.moveAnimations_[direction]);
-        -- end 
-        self:onDirectionChange(direction,self.direction_);
-        self.direction_ = direction;
-    end
-end
+-- function Organism:setDirection(direction)
+--     self.direction_ = direction
+--     if self.behaviorObjects_ then 
+--         for i,behavior in ipairs(self.behaviorObjects_) do
+--             if behavior.onDirectionChange then
+--                 behavior.onDirectionChange(self)
+--             end
+--         end
+--     end
+--     self.preDirection_ = self.direction_
+-- end
 
 function Organism:createView(batch, marksLayer, debugLayer)
 	Organism.super.createView(self, batch, marksLayer, debugLayer)
@@ -133,14 +132,14 @@ end
 function Organism:preparePlay()
 end
 
-function Organism:onDirectionChange()
-	if self.direction_ ~= MOVELEFT then
-		self:setFlipSprite(true)
-	else
-		self:setFlipSprite(false)
-	end
+-- function Organism:onDirectionChange()
+-- 	if self.direction_ ~= MOVELEFT then
+-- 		self:setFlipSprite(true)
+-- 	else
+-- 		self:setFlipSprite(false)
+-- 	end
 
-end
+-- end
 
 function Organism:getDirection(direction)
     return self.direction_

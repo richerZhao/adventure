@@ -40,6 +40,8 @@ function Map:init()
     self.objectsByClass_ 	= {}
     self.unreach_           = {}
     self.npcGenArea_        = {}
+    self.monsterGenArea_    = {}
+    self.monsterGenAreaArr_ = {}
     
     display.addSpriteFrames("player.plist", "player.png")
     display.addSpriteFrames("SheetMapBattle.plist", "SheetMapBattle.png")
@@ -210,11 +212,11 @@ function Map:createView(parent)
 
     --初始化NPC诞生区域
     local objectLayer = map:getObjectGroup("npcgenerateLayer")
-    for i=1,1 do
+    local objects = objectLayer:getObjects()
+    for i,prop in ipairs(objects) do
         local area = {}
-        area.areaName = "npc_gen_point_"..i
+        area.areaName = prop.name
         area.tiles = {}
-        local prop = objectLayer:getObject(area.areaName)
         local minTileX = math.modf(prop.x/map:getTileSize().width) 
         local maxTileY = math.modf((map:getMapSize().height * map:getTileSize().height - prop.y)/map:getTileSize().height)
         local maxTileX = math.modf((prop.x + prop.width)/map:getTileSize().width) 
@@ -230,11 +232,33 @@ function Map:createView(parent)
         self.npcGenArea_[area.areaName] = area
     end
 
+    --初始化MONSTER诞生区域
+    objectLayer = map:getObjectGroup("monstergenerateLayer")
+    objects = objectLayer:getObjects()
+    for i,prop in ipairs(objects) do
+        local area = {}
+        area.areaName = prop.name
+        area.tiles = {}
+        area.count = 0
+        local minTileX = math.modf(prop.x/map:getTileSize().width) 
+        local maxTileY = math.modf((map:getMapSize().height * map:getTileSize().height - prop.y)/map:getTileSize().height)
+        local maxTileX = math.modf((prop.x + prop.width)/map:getTileSize().width) 
+        local minTileY = math.modf((map:getMapSize().height * map:getTileSize().height - (prop.y + prop.height))/map:getTileSize().height)
+        for x=minTileX,maxTileX do
+            for y=minTileY,maxTileY do
+                if not self.unreach_:isUnreachTile(cc.p(x,y)) then
+                    table.insert(area.tiles, cc.p(x,y))
+                end
+                
+            end
+        end
+        self.monsterGenArea_[area.areaName] = area
+        table.insert(self.monsterGenAreaArr_, area)
+    end
+    self:sortMonsterArea()
+
     for id, object in pairs(self.objects_) do
         object:createView(self.batch_, self.marksLayer_, self.debugLayer_)
-        local tile = self.npcGenArea_["npc_gen_point_1"].tiles[math.random(table.getn(self.npcGenArea_["npc_gen_point_1"].tiles))]
-        -- local x,y = self:convertTileToMapPosition(tile)
-        object:setPosition(self:convertTileToMapPosition(tile))
         object:updateView()
     end
     self:setAllObjectsZOrder()
@@ -312,7 +336,6 @@ function Map:convertTileToMapPosition(tile)
 end
 
 function Map:convertMapPositionToTile(mapPosition)
-    dump(mapPosition, "mapPosition", mapPosition)
     local map = self:getBackgroundLayer()
     local x  = math.modf(mapPosition.x/map:getTileSize().width)
     local y = math.modf(((map:getMapSize().height * map:getTileSize().height ) - mapPosition.y) / map:getTileSize().height)
@@ -366,5 +389,45 @@ function Map:canReach_(targetPosition)
     if self.unreach_:isUnreachTile(targetPosition) then return false end
     return true
 end
+
+function Map:getNpcGenPoint(araeName)
+    local area = self.npcGenArea_[araeName]
+    if not area then return end
+    local tile = area.tiles[math.random(table.getn(area.tiles))]
+    if not tile then return end
+    return cc.p(self:convertTileToMapPosition(tile))
+end
+
+function Map:addMonster(araeName)
+    local area = self.monsterGenArea_[araeName]
+    if not area then return false end
+    area.count = area.count + 1
+    self:sortMonsterArea()
+    return true
+end
+
+function Map:removeMonster(araeName)
+    local area = self.monsterGenArea_[araeName]
+    if not area then return end
+    area.count = area.count - 1
+    if area.count < 0 then area.count = 0 end
+    self:sortMonsterArea()
+end
+
+function Map:sortMonsterArea()
+    table.sort(self.monsterGenAreaArr_,function (a,b)
+        return a.count < b.count
+    end)
+end
+
+function Map:getMostMonsterAreaPoint()
+    local area = self.monsterGenAreaArr_[1]
+    if not area then return end
+    local tile = area.tiles[math.random(table.getn(area.tiles))]
+    if not tile then return end
+    return cc.p(self:convertTileToMapPosition(tile))
+end
+
+
 
 return Map

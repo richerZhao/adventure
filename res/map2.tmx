@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" orientation="orthogonal" renderorder="right-down" width="50" height="50" tilewidth="32" tileheight="32" nextobjectid="19">
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="50" height="50" tilewidth="32" tileheight="32" nextobjectid="21">
  <tileset firstgid="1" name="tmw_desert_spacing" tilewidth="32" tileheight="32" spacing="1" margin="1">
   <image source="tmw_desert_spacing.png" width="265" height="199"/>
  </tileset>
@@ -59,6 +59,6 @@
   </object>
  </objectgroup>
  <objectgroup name="npcgenerateLayer">
-  <object id="11" name="npc_gen_point_1" x="36" y="547" width="55" height="152"/>
+  <object id="20" name="npc_gen_point_1" x="28" y="542" width="73" height="166"/>
  </objectgroup>
 </map>

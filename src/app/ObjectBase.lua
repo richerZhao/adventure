@@ -215,14 +215,25 @@ function ObjectBase:unbindMethod(behavior, methodName)
 end
 
 function ObjectBase:setDirection(direction)
-    self.preDirection_ = self.direction_
     self.direction_ = direction
     if self.behaviorObjects_ then 
-        for i,behavior in ipairs(self.behaviorObjects_) do
+        for i,behavior in pairs(self.behaviorObjects_) do
             if behavior.onDirectionChange then
-                behavior.onDirectionChange(self)
+                behavior:onDirectionChange(self)
             end
         end
+    end
+    self.preDirection_ = self.direction_
+end
+
+function ObjectBase:onDirectionChange()
+    if object.preDirection_ == object.direction_ then return end
+    if object.direction_ == MOVEDOWN then
+    elseif object.direction_ == MOVELEFT then
+        object.sprite_:setFlippedX(true)
+    elseif object.direction_ == MOVERIGHT then
+        object.sprite_:setFlippedX(false)
+    elseif object.direction_ == MOVEUP then
     end
 end
 
