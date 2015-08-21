@@ -14,8 +14,8 @@ local defines = {}
 
 ----------------------------------------
 
-local object = {
-    classId       = "organism",
+local npc = {
+    classId       = "npc",
     modelName     = "player_f0006",
     radius        = 40,
     radiusOffsetY = 30,
@@ -25,11 +25,33 @@ local object = {
     hpSpriteOffsetY  = 32,
     maxHp         = 100,
     campId        = 1,
+    flipSprite    = true,
     genAreaName   = "npc_gen_point_1",
+    hatredRange   = 96,
+    attackRange   = 32,
     behaviors     = {"NpcBehavior"},
 }
 
-defines["organism"] = object
+defines["npc"] = npc
+
+local monster = {
+    classId       = "monster",
+    modelName     = "player_f0015",
+    radius        = 40,
+    radiusOffsetY = 30,
+    framesTime    = 0.25,
+    scale         = 0.4,
+    idleLastTime  = 1.5,
+    hpSpriteOffsetY  = 32,
+    maxHp         = 100,
+    campId        = 2,
+    flipSprite    = true,
+    hatredRange   = 64,
+    attackRange   = 32,
+    behaviors     = {"MonsterBehavior"},
+}
+
+defines["monster"] = monster
 
 ----------------------------------------
 

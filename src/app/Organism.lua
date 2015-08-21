@@ -18,14 +18,15 @@ function Organism:ctor(id,state,map)
     self.radiusOffsetY_ = checkint(self.radiusOffsetY_)
     self.radius_        = checkint(self.radius_)
     self.flipSprite_    = checkbool(self.flipSprite_)
+    self.campId_        = checkint(self.campId_)
     self.visible_       = true
     self.valid_         = true
     self.sprite_        = nil
     self.spriteSize_    = nil
-    -- self.framesTime_    =0.8
-    -- if self.direction_ == nil then
-        -- self.direction_ = MOVEDOWN;
-    -- end
+    self.moveLocked_    = 0  --移动向敌人/任务地点的锁
+    self.fightLocked_   = 0  --攻击敌人的锁
+
+
     self.isMoveObject = true
     self.actions_ = {}
 
@@ -163,6 +164,10 @@ end
 
 function Organism:getView()
     return self.sprite_
+end
+
+function Organism:getCampId()
+    return self.campId_
 end
 
 return Organism

@@ -15,9 +15,9 @@ function MoveableBehavior:onDirectionChange(object)
 		object.moveAction_ = nil
 		if object.direction_ == MOVEDOWN then
 		elseif object.direction_ == MOVELEFT then
-			object.sprite_:setFlippedX(false)
+			object:setFlipSprite(false)
 		elseif object.direction_ == MOVERIGHT then
-			object.sprite_:setFlippedX(true)
+			object:setFlipSprite(true)
 		elseif object.direction_ == MOVEUP then
 		end
 		local animation = display.newAnimation(object.moveFrames_[object.direction_],1/8)
@@ -32,6 +32,8 @@ function MoveableBehavior:bind(object)
 	object.pathIndex_				 	= 0		--当前的路径点序号
 	object.moveAction_				 	= nil	--移动动作
 	object.moveFrames_					= nil	--动画
+
+
 
 	--初始化移动动作
 	object.moveFrames_ = {}
@@ -75,7 +77,9 @@ function MoveableBehavior:bind(object)
 		object:setPosition(x, y)
 		object:setDirection(direction)
 		object:setPathIndex(pathIndex)
-		if object.pathIndex_ > #object.paths_ then object:stopMove() end
+		if object.pathIndex_ > #object.paths_ then 
+			object:stopMove() 
+		end
 	end
 	object:bindMethod(self, "tick", tick)
 

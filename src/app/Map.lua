@@ -15,7 +15,8 @@ function Map:ctor(id)
             objects = {},
         }
 
-    data.objects["organism:1"] = {defineId="organism"}
+    data.objects["npc:1"] = {defineId="npc"}
+    data.objects["monster:1"] = {defineId="monster"}
 
     self.data_ = clone(data)
 end
@@ -42,6 +43,7 @@ function Map:init()
     self.npcGenArea_        = {}
     self.monsterGenArea_    = {}
     self.monsterGenAreaArr_ = {}
+    self.npcCount_          = 0
     
     display.addSpriteFrames("player.plist", "player.png")
     display.addSpriteFrames("SheetMapBattle.plist", "SheetMapBattle.png")
@@ -85,6 +87,13 @@ end
 
 function Map:newObject(classId,state,id)
 	local object = ObjectFactory.newObject(classId, id, state,self)
+    if classId == "organism" then 
+        if object:getCampId() == MapConstants.PLAYER_CAMP then
+            self:addNpc()
+        else
+            self:addMonster()
+        end
+    end
 	object:resetAllBehaviors()
 
 	self.objects_[id] = object
@@ -140,6 +149,11 @@ function Map:removeObject(object)
 
     self.objects_[id] = nil
     self.objectsByClass_[object:getClassId()][id] = nil
+    if object:getCampId() == MapConstants.PLAYER_CAMP then
+        self:removeNpc()
+    else
+        self:removeMonster()
+    end
     if object:isViewCreated() then
         object:removeView()
     end
@@ -421,13 +435,50 @@ function Map:sortMonsterArea()
 end
 
 function Map:getMostMonsterAreaPoint()
-    local area = self.monsterGenAreaArr_[1]
-    if not area then return end
-    local tile = area.tiles[math.random(table.getn(area.tiles))]
-    if not tile then return end
-    return cc.p(self:convertTileToMapPosition(tile))
+    local tile = self:getMostMonsterAreaPoint_()
+    if tile then 
+        return cc.p(self:convertTileToMapPosition(tile))
+    end
+    return
 end
 
+function Map:getMostMonsterAreaPoint_()
+    local area = self.monsterGenAreaArr_[1]
+    if not area then return end
+    local tile
+    while not tile do
+        tile = area.tiles[math.random(table.getn(area.tiles))]
+        if tile then
+            if self:canReach_(tile) then
+                return tile
+            end
+        end
+    end
+    return
+end
 
+function Map:getMonsterCount()
+    local count = 0
+    for i,v in ipairs(self.monsterGenAreaArr_) do
+        if v.count <= 0 then
+            break
+        end
+        count = count + v.count
+    end
+    return count
+end
+
+function Map:addNpc()
+    self.npcCount_ = self.npcCount_ + 1
+end
+
+function Map:removeNpc()
+    self.npcCount_ = self.npcCount_ - 1
+    if self.npcCount_ < 0 then self.npcCount_ = 0 end
+end
+
+function Map:getNpcCount()
+    return self.npcCount_
+end
 
 return Map

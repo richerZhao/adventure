@@ -113,7 +113,7 @@ function LifeBehavior:bind(object)
         object.hp__ = object.hp_
         if object.hp_ > 0 then
             local x, y = object.x_, object.y_
-            local x2 = x - object.sprite_:getContentSize().width/2
+            local x2 = x - object.hpOutlineSprite_:getContentSize().width/2
             -- local y2 = y + object.sprite_:getContentSize().height/2 + object.hpSpriteOffsetY_
             local y2 = y + object.hpSpriteOffsetY_
             -- print("x="..x .. ",y="..y.."x2="..x2.."y2="..y2)
@@ -134,11 +134,6 @@ function LifeBehavior:bind(object)
     end
     object:bindMethod(self, "fastUpdateView", fastUpdateView)
 
-    local function getCampId(object)
-    	return object.campId_
-    end
-    object:bindMethod(self, "getCampId", getCampId)
-
     local function setHpVisible(object,visible)
     	object.hpSprite_:setVisible(visible)
         object.hpOutlineSprite_:setVisible(visible)
@@ -155,7 +150,6 @@ function LifeBehavior:unbind(object)
 	object:unbindMethod(self, "decreaseHp")
 	object:unbindMethod(self, "increaseHp")
 	object:unbindMethod(self, "checkLifeState")
-	object:unbindMethod(self, "getCampId")
 	object:unbindMethod(self, "createView")
 	object:unbindMethod(self, "removeView")
 	object:unbindMethod(self, "updateView")
@@ -169,7 +163,6 @@ end
 function LifeBehavior:reset(object)
     object.hpSpriteOffsetY_ = checkint(object.state_.hpSpriteOffsetY)
     object.maxHp_      		= checkint(object.state_.maxHp)
-    object.campId_  		= checkint(object.state_.campId)
 
 
     if object.maxHp_ < 1 then object.maxHp_ = 1 end

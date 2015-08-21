@@ -1,4 +1,6 @@
- local MapConstants = require("app.MapConstants")
+local MapConstants = require("app.MapConstants")
+local MapEvent = require("app.MapEvent")
+
 
 local MapRuntime = class("MapRuntime",function()
     return display.newNode()
@@ -17,6 +19,8 @@ function MapRuntime:ctor(map)
     self.time_                 = 0 -- 地图已经运行的时间
     self.lastSecond_           = 0 -- 用于触发 OBJECT_IN_RANGE 事件
     self.colls_                = {} -- 用于跟踪碰撞状态
+    self.monsterGenDuration_   = 0  -- 用于计算怪物生成时间
+    self.maxMonsters_          = 10 --最大怪物数量
 
     --TODO 用于事件监控
     -- local eventHandlerModuleName = string.format("maps.Map%sEvents", map:getId())
@@ -45,6 +49,8 @@ function MapRuntime:preparePlay()
 
     self.time_          = 0
     self.lastSecond_    = 0
+    self.monsterGenDuration_   = 0
+    self.maxMonsters_          = 10
 end
 
 function MapRuntime:startPlay()
@@ -55,6 +61,9 @@ function MapRuntime:startPlay()
 
     for id, object in pairs(self.map_:getAllObjects()) do
         object:startPlay()
+        -- local p = self.map_:getNpcGenPoint("npc_gen_point_1")
+        -- dump(p, "p", p)
+        -- object:setPosition(p.x,p.y)
         object:startRunAI()
         -- object:setPath({{x=48,y=1008},{x=48,y=976},{x=80,y=976},{x=112,y=976},{x=144,y=976},{x=176,y=976}})
         object.updated__ = true
@@ -68,6 +77,7 @@ function MapRuntime:startPlay()
         -- end
     end
 
+    print("self.map_:getNpcCount()="..self.map_:getNpcCount())
     -- self.handler_:startPlay(state)
     -- self:dispatchEvent({name = MapEvent.MAP_START_PLAY})
 
@@ -97,7 +107,14 @@ function MapRuntime:tick(dt)
 
 	self.time_ = self.time_ + dt
     local secondsDelta = self.time_ - self.lastSecond_
-
+    
+    if self.map_:getMonsterCount() < 10 then
+        self.monsterGenDuration_ = self.monsterGenDuration_ + dt
+        if self.monsterGenDuration_ > 10 then
+            --TODO 生成一个怪物
+            self.monsterGenDuration_ = 0
+        end
+    end
     -- if secondsDelta >= 1.0 then
     --     self.lastSecond_ = self.lastSecond_ + secondsDelta
     --     if not self.over_ then
@@ -129,16 +146,18 @@ function MapRuntime:tick(dt)
         end
     end
 
-    -- -- 通过碰撞引擎获得事件
-    -- local events = self:tickCollider(self.map_.objects_, self.colls_, dt)
-    -- if self.over_ then
-    --     events = {}
-    -- end
+    -- 通过碰撞引擎获得事件
+    local events = self:tickCollider(self.map_.objects_, dt)
+
+    if self.over_ then
+        events = {}
+    end
 
     -- if events and #events > 0 then
     --     for i, t in ipairs(events) do
     --         local event, object1, object2 = t[1], t[2], t[3]
-    --         if event == MAP_EVENT_COLLISION_BEGAN then
+    --         self:dispatchEvent({name = MapEvent.OBJECT_ENTER_RANGE, object = object1, range = object2})
+            -- if event == MAP_EVENT_COLLISION_BEGAN then
     --             if object2.classIndex_ == CLASS_INDEX_RANGE then
     --                 handler:objectEnterRange(object1, object2)
     --                 self:dispatchEvent({name = MapEvent.OBJECT_ENTER_RANGE, object = object1, range = object2})
@@ -173,6 +192,81 @@ function MapRuntime:tick(dt)
 
 
 
+end
+
+function MapRuntime:tickCollider(objects, dt)
+    local dists = {}
+    local sqrt = math.sqrt
+
+     -- 遍历所有对象计算仇恨碰撞范围
+    for id1, obj1 in pairs(objects) do
+        while true do
+            local x1, y1 = obj1.x_ , obj1.y_
+            local campId1 = obj1.campId_
+            dists[obj1] = {}
+
+            for id2, obj2 in pairs(objects) do
+                while true do
+                    if obj1 == obj2 then
+                        break 
+                    end
+                    if campId1 == obj2.campId_ then
+                        break 
+                    end
+
+                    local x2, y2 = obj2.x_, obj2.y_
+                    local dx = x2 - x1
+                    local dy = y2 - y1
+                    local dist = sqrt(dx * dx + dy * dy)
+                    dists[obj1][obj2] = dist
+                    break -- stop while
+                end
+            end 
+
+            break -- stop while
+        end
+    end
+
+    -- 检查仇恨范围和攻击范围
+    local events = {}
+    for obj1, obj1targets in pairs(dists) do
+        while true do
+            if obj1:hasBehavior("AttackBehavior") then
+                --该对象没有处于战斗移动/战斗中
+                if obj1.moveLocked_ > 0 or obj1.fightLocked_ > 0 then
+                   break
+                end
+                local hatredRange1 = obj1.hatredRange_
+                local attackRange1 = obj1.attackRange_
+                local target
+                local mindist
+                local eventName
+                for obj2, dist1to2 in pairs(obj1targets) do
+                    --如果在攻击范围
+                    if dist1to2 <= attackRange1 then
+                        if not mindist then
+                            mindist = dist1to2
+                            target = obj2
+                            eventName = "attack"
+                        end
+                    --如果在仇恨范围
+                    elseif dist1to2 <= hatredRange1 then
+                        if not mindist then
+                            mindist = dist1to2
+                            target = obj2
+                            eventName = "hatred"
+                        end
+                    end
+                end
+
+                if target then
+                    events[#events + 1] = {eventName, obj1, target}
+                end
+            end
+            break
+        end
+    end
+    return events
 end
 
 function MapRuntime:getMap()

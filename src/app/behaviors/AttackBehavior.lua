@@ -17,9 +17,9 @@ function AttackBehavior:onDirectionChange(object)
 		object.attackAction_ = nil
 		if object.direction_ == MOVEDOWN then
 		elseif object.direction_ == MOVELEFT then
-			object.sprite_:setFlippedX(true)
+			object:setFlipSprite(true)
 		elseif object.direction_ == MOVERIGHT then
-			object.sprite_:setFlippedX(false)
+			object:setFlipSprite(false)
 		elseif object.direction_ == MOVEUP then
 		end
 		local animation = display.newAnimation(object.attackFrames_[object.direction_],1/8)

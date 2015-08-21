@@ -16,9 +16,9 @@ function IdleBehavior:onDirectionChange(object)
 		object.idleAction_ = nil
 		if object.direction_ == MOVEDOWN then
 		elseif object.direction_ == MOVELEFT then
-			object.sprite_:setFlippedX(true)
+			object:setFlipSprite(true)
 		elseif object.direction_ == MOVERIGHT then
-			object.sprite_:setFlippedX(false)
+			object:setFlipSprite(false)
 		elseif object.direction_ == MOVEUP then
 		end
 		local idleAnimation = display.newAnimation(object.idleFrames_[object.direction_],1/4)

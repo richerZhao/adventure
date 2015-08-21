@@ -9,8 +9,11 @@ function SearchPathBehavior:bind(object)
 	local function searchPath(object,targetPos)
 		local current = object.map_:convertMapPositionToTile(cc.p(object:getPosition()))
 		local target = object.map_:convertMapPositionToTile(targetPos)
+		dump(target, "target", target)
+		dump(current, "current", current)
 		local tiles = object:searchPath_(current,target)
-		if tiles == nil then return end
+		if not tiles then return end
+		dump(tiles, "tiles", tiles)
 		local points = {}
 		for i,v in ipairs(tiles) do
 			table.insert(points, cc.p(object.map_:convertTileToMapPosition(v)))
@@ -69,7 +72,7 @@ function SearchPathBehavior:bind(object)
 			if nextNode then
 				currentNode = nextNode
 			else
-				return false
+				return
 			end
 		end
 

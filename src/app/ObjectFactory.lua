@@ -5,15 +5,15 @@ local ObjectFactory = {}
 --创建一个对象
 function ObjectFactory.newObject(classId, id, state, map)
 	local object
-    if classId == "organism" then
+    if classId == "npc" then
         object = Organism.new(id, state, map)
         object:init()
     --     -- if debug then
     --     --     object:bindBehavior("StaticObjectEditorBehavior")
     --     -- end
-    -- elseif classId == "unreach" then
-    --     object = Unreach.new(id, state, map)
-    --     object:init()
+    elseif classId == "monster" then
+        object = Organism.new(id, state, map)
+        object:init()
     --     -- if debug then
     --     --     object:bindBehavior("PathEditorBehavior")
     --     -- end
