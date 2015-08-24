@@ -37,8 +37,9 @@ function NinjaEvnetHandler:stopPlay()
     g_eventManager:removeListenerWithTarget(self)
 end
 
+-- 敌人死亡
 function NinjaEvnetHandler:enemyDead()
-	
+
 end
 
 
