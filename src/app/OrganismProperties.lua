@@ -23,12 +23,14 @@ local npc = {
     scale         = 0.4,
     idleLastTime  = 1.5,
     hpSpriteOffsetY  = 32,
-    maxHp         = 100,
+    maxHp         = 200,
     campId        = 1,
     flipSprite    = true,
     genAreaName   = "npc_gen_point_1",
     hatredRange   = 96,
     attackRange   = 32,
+    attack        = 3,
+    defence       = 1,
     behaviors     = {"NpcBehavior"},
 }
 
@@ -48,6 +50,8 @@ local monster = {
     flipSprite    = true,
     hatredRange   = 64,
     attackRange   = 32,
+    attack        = 2,
+    defence       = 1,
     behaviors     = {"MonsterBehavior"},
 }
 

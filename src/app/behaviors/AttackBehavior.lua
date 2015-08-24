@@ -38,6 +38,8 @@ function AttackBehavior:bind(object)
 	object.attackFrames_					= nil	--动画
 	object.enemy_							= nil	--要攻击的敌人
 	object.idleTime_						= 0		--攻击空闲时间
+    object.attack_                          = checkint(object.state_.attack)     --攻击力
+    object.defence_                         = checkint(object.state_.defence)     --防御力
 
 	--初始化移动动作
 	object.attackFrames_ = {}
@@ -86,7 +88,10 @@ function AttackBehavior:bind(object)
     		object.idleTime_ = 0
     		object:stopIdle()
     		object:startAttack()
-            object:decreaseHp(1)
+            local damage = object.attack_ - object.enemy_.defence_
+            if damage > 0 then
+                object.enemy_:decreaseHp(damage)
+            end
     	end
     end
     object:bindMethod(self, "tick", tick)
@@ -110,6 +115,8 @@ function AttackBehavior:reset(object)
     object.enemy_ = nil
     object.idleTime_ = 0
     object.attackAction_ = nil
+    object.attack_                          = checkint(object.state_.attack)     --攻击力
+    object.defence_                         = checkint(object.state_.defence)     --防御力
 end
 
 return AttackBehavior

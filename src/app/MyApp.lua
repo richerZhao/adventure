@@ -17,6 +17,8 @@ GameData={}
 local MyApp = class("MyApp", cc.mvc.AppBase)
 
 function MyApp:ctor()
+    math.randomseed( tonumber(tostring(os.time()):reverse():sub(1,6)) )
+    math.random(1,10000)
 	local saveData
 	GameState.init(function(param)
         local returnValue=nil

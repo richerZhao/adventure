@@ -134,27 +134,33 @@ function EventManager:removeListenerWithEvent( target, event )
     return true
 end
 
-function EventManager:dispatchEvent( event,... )
+function EventManager:dispatchEvent( event,sender,... )
 	if event == nil then 
 		return nil
 	end
 	local args = {...}
-	self:_doDispatchEvent(event, args)
+	self:_doDispatchEvent(event,sender, args)
 end
 
-function EventManager:_doDispatchEvent( event, args )
+function EventManager:_doDispatchEvent( event,sender, args )
 	local eventObserver = self._observerList[event]
 	if eventObserver == nil then 
 		return false
 	end
 
 	for key, value in pairs(eventObserver) do  
-		if value ~= nil and type(value) == "table" and table.getn(value) >= 2 then 
-			if value[1] ~= nil and value[2] ~= nil then 
-				value[2](value[1], unpack(args))
-			elseif value[2] ~= nil then
-				value[2](unpack(args))
+		while true do
+			if value ~= nil and type(value) == "table" and table.getn(value) >= 2 then 
+				if sender and sender ~= value[1] then
+					break
+				end
+				if value[1] ~= nil and value[2] ~= nil then 
+					value[2](value[1], unpack(args))
+				elseif value[2] ~= nil then
+					value[2](unpack(args))
+				end
 			end
+			break
 		end
     end
 end

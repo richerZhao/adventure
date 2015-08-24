@@ -24,8 +24,9 @@ function MapRuntime:ctor(map)
 
     --TODO 用于事件监控
     -- local eventHandlerModuleName = string.format("maps.Map%sEvents", map:getId())
-    -- local eventHandlerModule = require(eventHandlerModuleName)
-    -- self.handler_ = eventHandlerModule.new(self, map)
+    local monsterEventHandler = "app.MonsterEventHandler"
+    local eventHandlerModule = require(eventHandlerModuleName)
+    self.monsterHandler_ = eventHandlerModule.new(self, map)
 
 
 
@@ -61,23 +62,13 @@ function MapRuntime:startPlay()
 
     for id, object in pairs(self.map_:getAllObjects()) do
         object:startPlay()
-        -- local p = self.map_:getNpcGenPoint("npc_gen_point_1")
-        -- dump(p, "p", p)
-        -- object:setPosition(p.x,p.y)
+        if object.addListener then
+            object:addListener()
+        end
         object:startRunAI()
-        -- object:setPath({{x=48,y=1008},{x=48,y=976},{x=80,y=976},{x=112,y=976},{x=144,y=976},{x=176,y=976}})
         object.updated__ = true
-
-        -- if object.classIndex_ == CLASS_INDEX_STATIC and object:hasBehavior("TowerBehavior") then
-        --     self.towers_[id] = {
-        --         object.x_ + object.radiusOffsetX_,
-        --         object.y_ + object.radiusOffsetY_,
-        --         object.radius_ + 20,
-        --     }
-        -- end
     end
 
-    print("self.map_:getNpcCount()="..self.map_:getNpcCount())
     -- self.handler_:startPlay(state)
     -- self:dispatchEvent({name = MapEvent.MAP_START_PLAY})
 
@@ -98,6 +89,16 @@ end
 
 function MapRuntime:onTouch(event, x, y)
 	--TODO 点中建筑物,人物的操作
+end
+
+function MapRuntime:addListener()
+    g_eventManager:addEventListener(MapEvent.EVENT_MONSTER_DEAD,function(sender,target)
+            print("monster "..target.id_ .. " dead.")
+            sender:setEnemy(target)
+            sender:setPath(sender:searchPath(cc.p(target:getPosition())))
+            sender:addMoveLock()
+            end,self)
+
 end
 
 function MapRuntime:tick(dt)
@@ -132,11 +133,6 @@ function MapRuntime:tick(dt)
 
             -- 只有当对象的位置发生变化时才调整对象的 ZOrder
             if object.updated__ and object.sprite_ and object.viewZOrdered_ then
-                -- if object.isMoveObject then
-                --     self.marksLayer_:reorderChild(object.sprite_, maxZOrder - (object.y_ + object.offsetY_))
-                -- else
-                --     self.batch_:reorderChild(object.sprite_, maxZOrder - (object.y_ + object.offsetY_))
-                -- end
                 self.batch_:reorderChild(object.sprite_, maxZOrder - (object.y_ + object.offsetY_))
             end
         end
@@ -153,22 +149,14 @@ function MapRuntime:tick(dt)
         events = {}
     end
 
-    -- if events and #events > 0 then
-    --     for i, t in ipairs(events) do
-    --         local event, object1, object2 = t[1], t[2], t[3]
-    --         self:dispatchEvent({name = MapEvent.OBJECT_ENTER_RANGE, object = object1, range = object2})
-            -- if event == MAP_EVENT_COLLISION_BEGAN then
-    --             if object2.classIndex_ == CLASS_INDEX_RANGE then
-    --                 handler:objectEnterRange(object1, object2)
-    --                 self:dispatchEvent({name = MapEvent.OBJECT_ENTER_RANGE, object = object1, range = object2})
-    --             else
-    --                 handler:objectCollisionBegan(object1, object2)
-    --                 self:dispatchEvent({
-    --                     name = MapEvent.OBJECT_COLLISION_BEGAN,
-    --                     object1 = object1,
-    --                     object2 = object2,
-    --                 })
-    --             end
+    if events and #events > 0 then
+        for i, t in ipairs(events) do
+            local event, object1, object2 = t[1], t[2], t[3]
+            g_eventManager:dispatchEvent(event,object1,object2)
+        end
+    end
+            -- if event == MapEvent.OBJECT_IN_HATRED_RANGE then
+            --     self:dispatchEvent({name = MapEvent.OBJECT_IN_HATRED_RANGE, object = object1, range = object2})
     --         elseif event == MAP_EVENT_COLLISION_ENDED then
     --             if object2.classIndex_ == CLASS_INDEX_RANGE then
     --                 handler:objectExitRange(object1, object2)
@@ -230,20 +218,20 @@ function MapRuntime:tickCollider(objects, dt)
     -- 检查仇恨范围和攻击范围
     local events = {}
     for obj1, obj1targets in pairs(dists) do
-        while true do
-            if obj1:hasBehavior("AttackBehavior") then
-                --该对象没有处于战斗移动/战斗中
-                if obj1.moveLocked_ > 0 or obj1.fightLocked_ > 0 then
-                   break
-                end
-                local hatredRange1 = obj1.hatredRange_
-                local attackRange1 = obj1.attackRange_
-                local target
-                local mindist
-                local eventName
-                for obj2, dist1to2 in pairs(obj1targets) do
+        if obj1:hasBehavior("AttackBehavior") then
+            --该对象没有处于战斗移动/战斗中
+            local hatredRange1 = obj1.hatredRange_
+            local attackRange1 = obj1.attackRange_
+            local target
+            local mindist
+            local eventName
+            for obj2, dist1to2 in pairs(obj1targets) do
+                while true do
                     --如果在攻击范围
                     if dist1to2 <= attackRange1 then
+                        if obj1.fightLocked_ > 0 then
+                            break
+                        end
                         if not mindist then
                             mindist = dist1to2
                             target = obj2
@@ -251,19 +239,25 @@ function MapRuntime:tickCollider(objects, dt)
                         end
                     --如果在仇恨范围
                     elseif dist1to2 <= hatredRange1 then
+                        if obj1.moveLocked_ > 0 then
+                            break
+                        end 
                         if not mindist then
                             mindist = dist1to2
                             target = obj2
                             eventName = "hatred"
                         end
                     end
+                    
+                    break
                 end
+
 
                 if target then
                     events[#events + 1] = {eventName, obj1, target}
                 end
             end
-            break
+            
         end
     end
     return events

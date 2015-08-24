@@ -73,7 +73,7 @@ function LifeBehavior:bind(object)
     		if object.campId_ == PLAYER_CAMP then
     			object.lifeState_ = LifeBehavior.LIFE_STATE_INJURED
     			--TODO 发送XX受伤事件
-    		elseif object.campId_ == PLAYER_CAMP then
+    		elseif object.campId_ == MONSTER_CAMP then
     			object.lifeState_ = LifeBehavior.LIFE_STATE_DEAD
     			--TODO 发送XX死亡事件
     		end
@@ -139,6 +139,15 @@ function LifeBehavior:bind(object)
         object.hpOutlineSprite_:setVisible(visible)
     end
     object:bindMethod(self, "setHpVisible", setHpVisible)
+
+    local function fadeOut(object,time)
+        object.sprite_:fadeOut(time)
+        object.hpSprite_:fadeOut(time)
+        object.hpOutlineSprite_:fadeOut(time)
+    end
+    object:bindMethod(self, "fadeOut", fadeOut)
+
+    self:reset(object)
 end
 
 function LifeBehavior:unbind(object)
@@ -155,7 +164,7 @@ function LifeBehavior:unbind(object)
 	object:unbindMethod(self, "updateView")
 	object:unbindMethod(self, "fastUpdateView")
 	object:unbindMethod(self, "setHpVisible")
-
+    object:unbindMethod(self, "fadeOut")
 	
 	self:reset(object)
 end

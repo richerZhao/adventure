@@ -79,7 +79,20 @@ function Organism:createView(batch, marksLayer, debugLayer)
 end
 
 function Organism:release()
+    if self.behaviors_ then
+        for name,v in ipairs(self.behaviors_) do
+            if name then
+                self:unbindBehavior(name)
+            end
+        end
+    end
+end
 
+function Organism:removeView()
+    self.sprite_:removeSelf()
+    self:release()
+    self.sprite_ = nil
+    MoveObject.super.removeView(self)
 end
 
 function Organism:updateView()
@@ -133,15 +146,6 @@ end
 function Organism:preparePlay()
 end
 
--- function Organism:onDirectionChange()
--- 	if self.direction_ ~= MOVELEFT then
--- 		self:setFlipSprite(true)
--- 	else
--- 		self:setFlipSprite(false)
--- 	end
-
--- end
-
 function Organism:getDirection(direction)
     return self.direction_
 end
@@ -168,6 +172,22 @@ end
 
 function Organism:getCampId()
     return self.campId_
+end
+
+function Organism:addMoveLock()
+    self.moveLocked_    = self.moveLocked_ + 1
+end
+
+function Organism:removeMoveLock()
+    self.moveLocked_    = self.moveLocked_ - 1
+end
+
+function Organism:addAttackLock()
+    self.fightLocked_   = self.fightLocked_ + 1
+end
+
+function Organism:removeAttackLock()
+    self.fightLocked_   = self.fightLocked_ - 1
 end
 
 return Organism
