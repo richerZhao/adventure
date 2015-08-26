@@ -26,6 +26,7 @@ function NpcBehavior:bind(object)
 		local target = object.map_:getMostMonsterAreaPoint()
 		object:setPath(object:searchPath(target))
 		object:startMove()
+		object.map_:addNpc()
 	end
 	object:bindMethod(self, "startRunAI", startRunAI)
 
@@ -76,14 +77,14 @@ function NpcBehavior:bind(object)
 	local function addListener(object)
 		--注册进入仇恨区事件
 		g_eventManager:addEventListener(MapEvent.OBJECT_IN_HATRED_RANGE,function(sender,target)
-			print("monster "..target.id_ .. " enter npc ".. sender.id_.." HATRED_RANGE.")
+			print("enemy "..target.id_ .. " enter object " .. sender.id_ .. " hatred range")
 			sender:setEnemy(target)
 			sender:setPath(sender:searchPath(cc.p(target:getPosition())))
 			sender:addMoveLock()
 			end,object)
 		--注册进入可攻击范围事件
 		g_eventManager:addEventListener(MapEvent.OBJECT_IN_ATTACK_RANGE,function(sender,target)
-			print("monster "..target.id_ .. " enter npc ".. sender.id_.." ATTACK_RANGE.")
+			print("enemy "..target.id_ .. " enter object " .. sender.id_ .. " attack range")
 			object:stopAllAIActions()
 			object:startAttack()
 			sender:removeMoveLock()
@@ -106,6 +107,21 @@ function NpcBehavior:bind(object)
 		end
 	end
 	object:bindMethod(self, "stopAllAIActions", stopAllAIActions)
+
+	local function showDestroyedStatus(object,skipAnim,callback)
+        if skipAnim then
+            object:getView():setVisible(false)
+            callback(object)
+        else
+            transition.execute(object:getView(), cca.fadeOut(1), {  
+                onComplete = function(object)
+                    callback(object)
+                end,
+                time = 1,
+            })  
+        end
+    end
+    object:bindMethod(self, "showDestroyedStatus", showDestroyedStatus)
 	self:reset(object)
 end
 
@@ -116,6 +132,7 @@ function NpcBehavior:unbind(object)
 	object:unbindMethod(self, "stopRunAI")
 	object:unbindMethod(self, "addListener")
 	object:unbindMethod(self, "stopAllAIActions")
+	object:unbindMethod(self, "showDestroyedStatus")
 end
 
 function NpcBehavior:reset(object)

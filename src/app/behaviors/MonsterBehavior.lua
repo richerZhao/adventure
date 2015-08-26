@@ -13,6 +13,7 @@ function MonsterBehavior:bind(object)
 	object.genPoint_ = nil
 	object.aiState_  =  MonsterBehavior.AI_STATE_STOP
 	object.activityRange = {}
+	object.areaName_ = nil
 
 	local function isAIRun(object)
 		return object.aiState_ == MonsterBehavior.AI_STATE_RUN
@@ -21,8 +22,9 @@ function MonsterBehavior:bind(object)
 
 	local function startRunAI(object)
 		object.aiState_ = MonsterBehavior.AI_STATE_RUN
-		local p = object.map_:getMostMonsterAreaPoint_()
+		local p,areaName = object.map_:getLessMonsterAreaPoint_()
 		object.genPoint_ = p
+		object.areaName_ = areaName
 		object:setPosition(object.map_:convertTileToMapPosition(p))
 		for i=p.x-3,p.x+3 do
 			for k=p.y-3,p.y+3 do
@@ -35,6 +37,7 @@ function MonsterBehavior:bind(object)
 		local target = object.activityRange[math.random(#object.activityRange)]
 		object:setPath(object:searchPath(cc.p(object.map_:convertTileToMapPosition(target))))
 		object:startMove()
+		object.map_:addMonster(object.areaName_)
 	end
 	object:bindMethod(self, "startRunAI", startRunAI)
 
@@ -83,14 +86,14 @@ function MonsterBehavior:bind(object)
 	local function addListener(object)
 		--注册进入仇恨区事件
 		g_eventManager:addEventListener(MapEvent.OBJECT_IN_HATRED_RANGE,function(sender,target)
-			print("npc "..target.id_ .. " enter monster ".. sender.id_.." HATRED_RANGE.")
+			print("enemy "..target.id_ .. " enter object " .. sender.id_ .. " hatred range")
 			sender:setEnemy(target)
 			sender:setPath(sender:searchPath(cc.p(target:getPosition())))
 			sender:addMoveLock()
 			end,object)
 		--注册进入可攻击范围事件
 		g_eventManager:addEventListener(MapEvent.OBJECT_IN_ATTACK_RANGE,function(sender,target)
-			print("npc "..target.id_ .. " enter monster ".. sender.id_.." ATTACK_RANGE.")
+			print("enemy "..target.id_ .. " enter object " .. sender.id_ .. " attack range")
 			object:stopAllAIActions()
 			object:startAttack()
 			sender:removeMoveLock()
@@ -114,13 +117,20 @@ function MonsterBehavior:bind(object)
 	end
 	object:bindMethod(self, "stopAllAIActions", stopAllAIActions)
 
-	local function destroy(object)
-		object:stopAllAIActions()
-		object:fadeOut(1)
-		--TODO 发送怪物死亡事件
-
-	end
-	object:bindMethod(self, "stopAllAIActions", stopAllAIActions)
+	local function showDestroyedStatus(object,skipAnim,callback)
+        if skipAnim then
+            object:getView():setVisible(false)
+            callback(object)
+        else
+            transition.execute(object:getView(), cca.fadeOut(1), {  
+                onComplete = function()
+                    callback()
+                end,
+                time = 1,
+            })  
+        end
+    end
+    object:bindMethod(self, "showDestroyedStatus", showDestroyedStatus)
 	self:reset(object)
 end
 
@@ -130,6 +140,8 @@ function MonsterBehavior:unbind(object)
 	object:unbindMethod(self, "stopRunAI")
 	object:unbindMethod(self, "tick")
 	object:unbindMethod(self, "addListener")
+	object:unbindMethod(self, "stopAllAIActions")
+	object:unbindMethod(self, "showDestroyedStatus")
 end
 
 function MonsterBehavior:reset(object)

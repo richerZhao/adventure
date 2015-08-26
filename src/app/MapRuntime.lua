@@ -22,14 +22,15 @@ function MapRuntime:ctor(map)
     self.monsterGenDuration_   = 0  -- 用于计算怪物生成时间
     self.maxMonsters_          = 10 --最大怪物数量
 
-    --TODO 用于事件监控
+    --用于战斗轮询事件监控
     -- local eventHandlerModuleName = string.format("maps.Map%sEvents", map:getId())
-    local monsterEventHandler = "app.MonsterEventHandler"
+    local eventHandlerModuleName = "app.FightEventHandler"
     local eventHandlerModule = require(eventHandlerModuleName)
-    self.monsterHandler_ = eventHandlerModule.new(self, map)
+    self.fightEventHandler_ = eventHandlerModule.new(self, map)
 
-
-
+    eventHandlerModuleName = "app.MonsterEventHandler"
+    eventHandlerModule = require(eventHandlerModuleName)
+    self.monsterEventHandler_ = eventHandlerModule.new(self, map)
 end
 
 function MapRuntime:onExit()
@@ -37,8 +38,8 @@ function MapRuntime:onExit()
 end
 
 function MapRuntime:preparePlay()
-    -- self.handler_:preparePlay()
-    -- self:dispatchEvent({name = MapEvent.MAP_PREPARE_PLAY})
+    self.fightEventHandler_:preparePlay()
+    self.monsterEventHandler_:preparePlay()
 
     for id, object in pairs(self.map_:getAllObjects()) do
         object:validate()
@@ -48,10 +49,10 @@ function MapRuntime:preparePlay()
 
     self.camera_:setOffset(0, 0)
 
-    self.time_          = 0
-    self.lastSecond_    = 0
-    self.monsterGenDuration_   = 0
-    self.maxMonsters_          = 10
+    self.time_                  = 0
+    self.lastSecond_            = 0
+    self.monsterGenDuration_    = 0
+    self.maxMonsters_           = 10
 end
 
 function MapRuntime:startPlay()
@@ -61,18 +62,17 @@ function MapRuntime:startPlay()
     self.paused_      = false
 
     for id, object in pairs(self.map_:getAllObjects()) do
-        object:startPlay()
         if object.addListener then
             object:addListener()
         end
+        object:startPlay()
         object:startRunAI()
         object.updated__ = true
     end
 
-    -- self.handler_:startPlay(state)
+    self.fightEventHandler_:startPlay(state)
+    self.monsterEventHandler_:startPlay(state)
     -- self:dispatchEvent({name = MapEvent.MAP_START_PLAY})
-
-    -- self:start() -- start physics world
 end
 
 function MapRuntime:stopPlay()
@@ -80,9 +80,8 @@ function MapRuntime:stopPlay()
         object:stopPlay()
     end
 
-    -- self.handler_:stopPlay()
+    self.fightEventHandler_:stopPlay()
     -- self:dispatchEvent({name = MapEvent.MAP_STOP_PLAY})
-    -- self:removeAllEventListeners()
 
     self.starting_ = false
 end
@@ -91,31 +90,12 @@ function MapRuntime:onTouch(event, x, y)
 	--TODO 点中建筑物,人物的操作
 end
 
-function MapRuntime:addListener()
-    g_eventManager:addEventListener(MapEvent.EVENT_MONSTER_DEAD,function(sender,target)
-            print("monster "..target.id_ .. " dead.")
-            sender:setEnemy(target)
-            sender:setPath(sender:searchPath(cc.p(target:getPosition())))
-            sender:addMoveLock()
-            end,self)
-
-end
-
 function MapRuntime:tick(dt)
 	if not self.starting_ or self.paused_ then return end
 
 	-- local handler = self.handler_
 
-	self.time_ = self.time_ + dt
-    local secondsDelta = self.time_ - self.lastSecond_
-    
-    if self.map_:getMonsterCount() < 10 then
-        self.monsterGenDuration_ = self.monsterGenDuration_ + dt
-        if self.monsterGenDuration_ > 10 then
-            --TODO 生成一个怪物
-            self.monsterGenDuration_ = 0
-        end
-    end
+	
     -- if secondsDelta >= 1.0 then
     --     self.lastSecond_ = self.lastSecond_ + secondsDelta
     --     if not self.over_ then
@@ -125,22 +105,42 @@ function MapRuntime:tick(dt)
 
     -- 更新所有对象后
     local maxZOrder = MapConstants.MAX_OBJECT_ZORDER
-    for i, object in pairs(self.map_.objects_) do
-        if object.tick then
-            local lx, ly = object.x_, object.y_
-            object:tick(dt)
-            object.updated__ = lx ~= object.x_ or ly ~= object.y_
-
-            -- 只有当对象的位置发生变化时才调整对象的 ZOrder
-            if object.updated__ and object.sprite_ and object.viewZOrdered_ then
-                self.batch_:reorderChild(object.sprite_, maxZOrder - (object.y_ + object.offsetY_))
+    for i, object in pairs(self.map_:getAllObjects()) do
+        while true do
+            if object:hasBehavior("LifeBehavior") and object:isDestroyed() then
+                self.map_:removeObject(object)
+                break
             end
-        end
 
-        if object.fastUpdateView then
-            object:fastUpdateView()
+            if object.tick then
+                local lx, ly = object.x_, object.y_
+                object:tick(dt)
+                object.updated__ = lx ~= object.x_ or ly ~= object.y_
+
+                -- 只有当对象的位置发生变化时才调整对象的 ZOrder
+                if object.updated__ and object.sprite_ and object.viewZOrdered_ then
+                    self.batch_:reorderChild(object.sprite_, maxZOrder - (object.y_ + object.offsetY_))
+                end
+            end
+
+            if object.fastUpdateView then
+                object:fastUpdateView()
+            end
+            break
         end
+        
     end
+
+    -- self.time_ = self.time_ + dt
+    -- local secondsDelta = self.time_ - self.lastSecond_
+    
+    -- if self.map_:getMonsterCount() < 10 then
+    --     self.monsterGenDuration_ = self.monsterGenDuration_ + dt
+    --     if self.monsterGenDuration_ > 10 then
+    --         --TODO 生成一个怪物
+    --         self.monsterGenDuration_ = 0
+    --     end
+    -- end
 
     -- 通过碰撞引擎获得事件
     local events = self:tickCollider(self.map_.objects_, dt)
@@ -155,31 +155,11 @@ function MapRuntime:tick(dt)
             g_eventManager:dispatchEvent(event,object1,object2)
         end
     end
-            -- if event == MapEvent.OBJECT_IN_HATRED_RANGE then
-            --     self:dispatchEvent({name = MapEvent.OBJECT_IN_HATRED_RANGE, object = object1, range = object2})
-    --         elseif event == MAP_EVENT_COLLISION_ENDED then
-    --             if object2.classIndex_ == CLASS_INDEX_RANGE then
-    --                 handler:objectExitRange(object1, object2)
-    --                 self:dispatchEvent({name = MapEvent.OBJECT_EXIT_RANGE, object = object1, range = object2})
-    --             else
-    --                 handler:objectCollisionEnded(object1, object2)
-    --                 self:dispatchEvent({
-    --                     name = MapEvent.OBJECT_COLLISION_ENDED,
-    --                     object1 = object1,
-    --                     object2 = object2,
-    --                 })
-    --             end
-    --         elseif event == MAP_EVENT_FIRE then
-    --             allfireTarget = t[4];
-    --             handler:fire(object1, object2,allfireTarget)
-    --         elseif event == MAP_EVENT_NO_FIRE_TARGET then
-    --             handler:noTarget(object1)
-    --         end
-    --     end
-    -- end
 
-
-
+    --执行战斗计算
+    self.fightEventHandler_:tick(dt)
+    --执行生成怪物
+    self.monsterEventHandler_:tick(dt)
 end
 
 function MapRuntime:tickCollider(objects, dt)
@@ -202,6 +182,14 @@ function MapRuntime:tickCollider(objects, dt)
                         break 
                     end
 
+                    if not obj2:hasBehavior("LifeBehavior") then
+                        break 
+                    end
+
+                    if not obj2:isLive() then
+                        break 
+                    end
+
                     local x2, y2 = obj2.x_, obj2.y_
                     local dx = x2 - x1
                     local dy = y2 - y1
@@ -210,7 +198,6 @@ function MapRuntime:tickCollider(objects, dt)
                     break -- stop while
                 end
             end 
-
             break -- stop while
         end
     end
@@ -252,7 +239,6 @@ function MapRuntime:tickCollider(objects, dt)
                     break
                 end
 
-
                 if target then
                     events[#events + 1] = {eventName, obj1, target}
                 end
@@ -283,14 +269,16 @@ end
 function MapRuntime:newObject(classId, state, id)
     local object = self.map_:newObject(classId, state, id)
     object:preparePlay()
-    if self.starting_ then object:startPlay() end
+    if self.starting_ then
+        if object.addListener then
+            object:addListener()
+        end
+        object:startPlay() 
+        object:startRunAI()
+        object.updated__ = true
+    end
 
     if object.sprite_ and object.viewZOrdered_ then
-        -- if object.isMoveObject == true then
-        --     --todo
-        -- else
-        --     self.batch_:reorderChild(object.sprite_, MapConstants.MAX_OBJECT_ZORDER - (object.y_ + object.offsetY_))
-        -- end
         self.batch_:reorderChild(object.sprite_, MapConstants.MAX_OBJECT_ZORDER - (object.y_ + object.offsetY_))
     end
     object:updateView()
@@ -305,7 +293,6 @@ end
 ]]
 function MapRuntime:removeObject(object, delay)
     if delay then
-        print("MapRuntime:removeObject " .. delay)
         object:getView():performWithDelay(function()
             self.map_:removeObject(object)
         end, delay)
@@ -327,110 +314,5 @@ function MapRuntime:resumePlay()
     end
     self.paused_ = false
 end
-
--- function MapRuntime:tickCollider(objects, colls, dt)
---     local dists = {}
---     local sqrt = math.sqrt
-
---     -- 遍历所有对象，计算静态对象与其他静态对象或 Range 对象之间的距离
---     for id1, obj1 in pairs(objects) do
---         while true do
---             if not checkStiaticObjectCollisionEnabled(obj1) then
---                 break
---             end
-
---             local x1, y1 = obj1.x_ + checknumber(obj1.radiusOffsetX_), obj1.y_ + checknumber(obj1.radiusOffsetY_)
---             local campId1 = checkint(obj1.campId_)
---             dists[obj1] = {}
-
---             for id2, obj2 in pairs(objects) do
---                 while true do
---                     if obj1 == obj2 then
---                         break 
---                     end
-
---                     local ci = obj2.classIndex_
-
---                     if ci ~= CLASS_INDEX_MOVE and ci ~= CLASS_INDEX_RANGE then
---                         break 
---                     end
---                     if ci == CLASS_INDEX_MOVE and not checkStiaticObjectCollisionEnabled(obj2) then break end
---                     if campId1 ~= 0 and campId1 == obj2.campId_ then break end
-
---                     local x2, y2 = obj2.x_ + checknumber(obj2.radiusOffsetX_), obj2.y_ + checknumber(obj2.radiusOffsetY_)
---                     local dx = x2 - x1
---                     local dy = y2 - y1
---                     local dist = sqrt(dx * dx + dy * dy)
---                     dists[obj1][obj2] = dist
-
---                     break -- stop while
---                 end
---             end -- for id2, obj2 in pairs(objects) do
-
---             break -- stop while
---         end
---     end -- for id1, obj1 in pairs(objects) do
-
---     -- 检查碰撞和开火
---     local events = {}
---     for obj1, obj1targets in pairs(dists) do
---         local fireRange1 = checknumber(obj1.fireRange_)
---         local radius1 = checknumber(obj1.radius_)
---         local checkFire1 = obj1.fireEnabled_ and checknumber(obj1.fireLock_) <= 0 and fireRange1 > 0 and checknumber(obj1.fireCooldown_) <= 0
-
---         -- 从 obj1 的目标中查找距离最近的
---         local minTargetDist = 999999
---         local fireTarget = nil
---         local allfireTarget = {};
-
---         -- 初始化碰撞目标数组
---         if not colls[obj1] then colls[obj1] = {} end
---         local obj1colls = colls[obj1]
-
---         -- 检查 obj1 和 obj2 的碰撞关系
---         for obj2, dist1to2 in pairs(obj1targets) do
---             local radius2 = obj2.radius_
---             local isCollision = dist1to2 - radius1 - radius2 <= 0
-
---             local event = 0
---             local obj2CollisionWithObj1 = obj1colls[obj2]
---             if isCollision and not obj2CollisionWithObj1 then
---                 -- obj1 和 obj2 开始碰撞
---                 event = MAP_EVENT_COLLISION_BEGAN
---                 obj1colls[obj2] = true
---             elseif not isCollision and obj2CollisionWithObj1 then
---                 -- obj1 和 obj2 结束碰撞
---                 event = MAP_EVENT_COLLISION_ENDED
---                 obj1colls[obj2] = nil
---             end
-
---             if event ~= 0 then
---                 -- 记录事件
---                 events[#events + 1] = {event, obj1, obj2}
---             end
-
---             -- 检查 obj1 是否可以对 obj2 开火
---             if checkFire1 and obj2.classIndex_ == CLASS_INDEX_MOVE then
---                 local dist = dist1to2 - fireRange1 - radius2
---                 if dist <= 0 and dist < minTargetDist then
---                     minTargetDist = dist
-     
---                     fireTarget = obj2
---                     if obj1:hasBehavior("TowerBehavior") then
---                         allfireTarget[#allfireTarget + 1] = obj2;
---                     end               
---                 end
---             end
---         end
-
---         if fireTarget then
---             events[#events + 1] = {MAP_EVENT_FIRE, obj1, fireTarget,allfireTarget}
---         elseif checkFire1 then
---             events[#events + 1] = {MAP_EVENT_NO_FIRE_TARGET, obj1}
---         end
---     end
-
---     return events
--- end
 
 return MapRuntime

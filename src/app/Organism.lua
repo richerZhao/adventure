@@ -33,8 +33,6 @@ function Organism:ctor(id,state,map)
 end
 
 function Organism:createOrganismSprite(modelName)
-    self:release()
-   
     local moveFrames = display.newFrames(modelName .. "_walk_1_%02d.png",1,8)
     local firstFrame = moveFrames[1]
     return display.newSprite(firstFrame)
@@ -69,21 +67,20 @@ function Organism:createView(batch, marksLayer, debugLayer)
     end
 
     -- self.offsetY_ = self.spriteSize_[2]/2;
-    self.sprite_:addNodeEventListener(cc.NODE_EVENT, function(event)
-        if event.name == "exit" then
-            self:release()
-        end
-    end)
+    -- self.sprite_:addNodeEventListener(cc.NODE_EVENT, function(event)
+    --     if event.name == "exit" then
+    --         self:release()
+    --     end
+    -- end)
     batch:addChild(self.sprite_)
     self:setDirection(MOVEDOWN)
 end
 
 function Organism:release()
     if self.behaviors_ then
-        for name,v in ipairs(self.behaviors_) do
-            if name then
-                self:unbindBehavior(name)
-            end
+        for i,behaviorName in ipairs(self.behaviors_) do
+            behaviorName = string.trim(behaviorName)
+            if behaviorName ~= "" then self:unbindBehavior(behaviorName) end
         end
     end
 end
@@ -92,7 +89,7 @@ function Organism:removeView()
     self.sprite_:removeSelf()
     self:release()
     self.sprite_ = nil
-    MoveObject.super.removeView(self)
+    Organism.super.removeView(self)
 end
 
 function Organism:updateView()

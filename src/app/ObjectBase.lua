@@ -312,7 +312,11 @@ function ObjectBase:hasBehavior(behaviorName)
 end
 
 function ObjectBase:getView()
-    return nil
+    return self.sprite_
+end
+
+function ObjectBase:getId()
+    return self.id_
 end
 
 return ObjectBase

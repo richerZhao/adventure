@@ -29,7 +29,7 @@ local npc = {
     genAreaName   = "npc_gen_point_1",
     hatredRange   = 96,
     attackRange   = 32,
-    attack        = 3,
+    attack        = 30,
     defence       = 1,
     behaviors     = {"NpcBehavior"},
 }

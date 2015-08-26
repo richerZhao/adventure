@@ -2,8 +2,9 @@ local BehaviorBase = require("app.behaviors.BehaviorBase")
 local AttackBehavior = class("AttackBehavior",BehaviorBase)
 
 AttackBehavior.ATTACK_STATE_START = 0
-AttackBehavior.ATTACK_STATE_IDLE = 1
-AttackBehavior.ATTACK_STATE_STOPED = 2
+AttackBehavior.ATTACK_STATE_ATTACKDURATION = 1
+AttackBehavior.ATTACK_STATE_IDLE = 2
+AttackBehavior.ATTACK_STATE_STOPED = 3
 
 
 function AttackBehavior:ctor()
@@ -55,13 +56,13 @@ function AttackBehavior:bind(object)
 
     local function startAttack(object)
     	object.attackState_ = AttackBehavior.ATTACK_STATE_START
-    	local animation = display.newAnimation(object.attackFrames_[object.direction_],1/8)
-    	object.attackAction_ = object.sprite_:playAnimationOnce(animation,false,function ()
-    		--TODO 完成攻击后切换状态,空闲或者停止
-    		object.attackState_ = AttackBehavior.ATTACK_STATE_IDLE
-    		object.attackAction_ = nil
-    		object:startIdle()
-    	end)
+    	-- local animation = display.newAnimation(object.attackFrames_[object.direction_],1/8)
+    	-- object.attackAction_ = object.sprite_:playAnimationOnce(animation,false,function ()
+    	-- 	--TODO 完成攻击后切换状态,空闲或者停止
+    	-- 	object.attackState_ = AttackBehavior.ATTACK_STATE_IDLE
+    	-- 	object.attackAction_ = nil
+    	-- 	object:startIdle()
+    	-- end)
     end
     object:bindMethod(self, "startAttack", startAttack)
 
@@ -70,7 +71,7 @@ function AttackBehavior:bind(object)
     	object.enemy_ = nil
     	object.idleTime_ = 0
     	if object.attackAction_ then 
-    		transaction.removeAction(object.attackAction_)
+    		transition.removeAction(object.attackAction_)
     		object.attackAction_ = nil
     	end
     end
@@ -81,20 +82,20 @@ function AttackBehavior:bind(object)
     end
     object:bindMethod(self, "setEnemy", setEnemy)
 
-    local function tick(object,dt)
-    	if object.attackState_ ~= AttackBehavior.ATTACK_STATE_IDLE then return end
-    	object.idleTime_ = object.idleTime_ + dt
-    	if object.idleTime_ >= object.idleLastTime_ then
-    		object.idleTime_ = 0
-    		object:stopIdle()
-    		object:startAttack()
-            local damage = object.attack_ - object.enemy_.defence_
-            if damage > 0 then
-                object.enemy_:decreaseHp(damage)
-            end
-    	end
-    end
-    object:bindMethod(self, "tick", tick)
+    -- local function tick(object,dt)
+    -- 	if object.attackState_ ~= AttackBehavior.ATTACK_STATE_IDLE then return end
+    -- 	object.idleTime_ = object.idleTime_ + dt
+    -- 	if object.idleTime_ >= object.idleLastTime_ then
+    -- 		object.idleTime_ = 0
+    -- 		object:stopIdle()
+    -- 		object:startAttack()
+    --         local damage = object.attack_ - object.enemy_.defence_
+    --         if damage > 0 then
+    --             object.enemy_:decreaseHp(damage)
+    --         end
+    -- 	end
+    -- end
+    -- object:bindMethod(self, "tick", tick)
 
     self:reset(object)
 end
@@ -107,7 +108,7 @@ function AttackBehavior:unbind(object)
 	object:unbindMethod(self, "startAttack")
 	object:unbindMethod(self, "stopAttack")
 	object:unbindMethod(self, "setEnemy")
-	object:unbindMethod(self, "tick")
+	-- object:unbindMethod(self, "tick")
 end
 
 function AttackBehavior:reset(object)

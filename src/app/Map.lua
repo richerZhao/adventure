@@ -16,7 +16,7 @@ function Map:ctor(id)
         }
 
     data.objects["npc:1"] = {defineId="npc"}
-    data.objects["monster:1"] = {defineId="monster"}
+    -- data.objects["monster:1"] = {defineId="monster"}
 
     self.data_ = clone(data)
 end
@@ -87,13 +87,6 @@ end
 
 function Map:newObject(classId,state,id)
 	local object = ObjectFactory.newObject(classId, id, state,self)
-    if classId == "organism" then 
-        if object:getCampId() == MapConstants.PLAYER_CAMP then
-            self:addNpc()
-        else
-            self:addMonster()
-        end
-    end
 	object:resetAllBehaviors()
 
 	self.objects_[id] = object
@@ -113,30 +106,9 @@ function Map:newObject(classId,state,id)
 
         -- create view
         if self:isViewCreated() then
-            -- if object.isMoveObject == true then
-            --     object:createView(self.marksLayer_, self.marksLayer_, self.debugLayer_)
-            -- else
-            --     object:createView(self.batch_, self.marksLayer_, self.debugLayer_)
-            -- end
             object:createView(self.batch_, self.marksLayer_, self.debugLayer_)
             object:updateView()
-            
         end
-
-        -- if object:hasBehavior("TowerBehavior") then
-        --     if self:checkTowerPos(object.x_,object.y_) then
-        --         -- print("d12: ",object.x_, object.y_)
-        --         local pos = self:getTowerPos(object.x_, object.y_)
-        --         -- print("d13: ",pos.x, pos.y)
-        --         object.x_ = pos.x;
-        --         object.y_ = pos.y;
-        --         object:updateView();
-        --     else
-        --         self:removeObject(object);
-        --         return nil;
-        --     end
-            
-        -- end
     end
 
     return object
@@ -149,10 +121,10 @@ function Map:removeObject(object)
 
     self.objects_[id] = nil
     self.objectsByClass_[object:getClassId()][id] = nil
-    if object:getCampId() == MapConstants.PLAYER_CAMP then
+    if object:getCampId() == PLAYER_CAMP then
         self:removeNpc()
     else
-        self:removeMonster()
+        self:removeMonster(object.areaName_)
     end
     if object:isViewCreated() then
         object:removeView()
@@ -420,8 +392,8 @@ function Map:addMonster(araeName)
     return true
 end
 
-function Map:removeMonster(araeName)
-    local area = self.monsterGenArea_[araeName]
+function Map:removeMonster(areaName)
+    local area = self.monsterGenArea_[areaName]
     if not area then return end
     area.count = area.count - 1
     if area.count < 0 then area.count = 0 end
@@ -430,14 +402,15 @@ end
 
 function Map:sortMonsterArea()
     table.sort(self.monsterGenAreaArr_,function (a,b)
-        return a.count < b.count
+        return a.count > b.count
     end)
+
 end
 
 function Map:getMostMonsterAreaPoint()
-    local tile = self:getMostMonsterAreaPoint_()
+    local tile,areaName = self:getMostMonsterAreaPoint_()
     if tile then 
-        return cc.p(self:convertTileToMapPosition(tile))
+        return cc.p(self:convertTileToMapPosition(tile)),areaName
     end
     return
 end
@@ -450,7 +423,30 @@ function Map:getMostMonsterAreaPoint_()
         tile = area.tiles[math.random(table.getn(area.tiles))]
         if tile then
             if self:canReach_(tile) then
-                return tile
+                return tile,area.areaName
+            end
+        end
+    end
+    return
+end
+
+function Map:getLessMonsterAreaPoint()
+    local tile,areaName = self:getLessMonsterAreaPoint_()
+    if tile then 
+        return cc.p(self:convertTileToMapPosition(tile)),areaName
+    end
+    return
+end
+
+function Map:getLessMonsterAreaPoint_()
+    local area = self.monsterGenAreaArr_[#self.monsterGenAreaArr_]
+    if not area then return end
+    local tile
+    while not tile do
+        tile = area.tiles[math.random(table.getn(area.tiles))]
+        if tile then
+            if self:canReach_(tile) then
+                return tile,area.areaName
             end
         end
     end
@@ -460,10 +456,13 @@ end
 function Map:getMonsterCount()
     local count = 0
     for i,v in ipairs(self.monsterGenAreaArr_) do
-        if v.count <= 0 then
+        while true do
+            if v.count <= 0 then
+                break
+            end
+            count = count + v.count
             break
         end
-        count = count + v.count
     end
     return count
 end

@@ -6,6 +6,7 @@ local LifeBehavior = class("LifeBehavior",BehaviorBase)
 LifeBehavior.LIFE_STATE_DEAD = 0
 LifeBehavior.LIFE_STATE_LIVE = 1
 LifeBehavior.LIFE_STATE_INJURED = 2
+LifeBehavior.LIFE_STATE_DESTROYED = 3
 
 function LifeBehavior:ctor()
 	LifeBehavior.super.ctor(self,"LifeBehavior",nil, 1)
@@ -18,6 +19,11 @@ function LifeBehavior:bind(object)
 		return object.lifeState_ == LifeBehavior.LIFE_STATE_LIVE
 	end
 	object:bindMethod(self, "isLive", isLive)
+
+    local function isDestroyed(object)
+        return object.lifeState_ == LifeBehavior.LIFE_STATE_DESTROYED
+    end
+    object:bindMethod(self, "isDestroyed", isDestroyed)
 
 	local function getMaxHp(object)
         return object.maxHp_
@@ -47,41 +53,50 @@ function LifeBehavior:bind(object)
 
     local function decreaseHp(object, amount)
         amount = checknumber(amount)
+        local trueDamage = amount
         assert(amount >= 0, string.format("DestroyedBehavior.decreaseHp() - invalid amount %s", tostring(amount)))
-        object.hp_ = object.hp_ - amount
-        if object.hp_ <= 0 then
+        if object.hp_ - amount <= 0 then
+            trueDamage = object.hp_
             object.hp_ = 0
+        else
+            object.hp_ = object.hp_ - amount
         end
         object:checkLifeState()
+        return trueDamage
     end
     object:bindMethod(self, "decreaseHp", decreaseHp)
 
     local function increaseHp(object, amount)
         amount = checknumber(amount)
+        local trueCure = amount
         assert(amount >= 0, string.format("DestroyedBehavior.increaseHp() - invalid amount %s", tostring(amount)))
-        object.hp_ = object.hp_ + amount
-        if object.hp_ >= object.maxHp_ then
+        if object.hp_ + amount >= object.maxHp_ then
+            trueCure = object.maxHp_ - object.hp_
             object.hp_ = object.maxHp_
+        else
+            object.hp_ = object.hp_ + amount
         end
         object:checkLifeState()
+        return trueCure
     end
     object:bindMethod(self, "increaseHp", increaseHp)
 
     local function checkLifeState(object)
-    	if object.preLifeState_ == object.lifeState_ then return end
+        if object.id_ == "monster:2" then
+            print("checkLifeState start object.lifeState_="..object.lifeState_)
+        end
     	if object.hp_ <= 0 then
     		if object.campId_ == PLAYER_CAMP then
     			object.lifeState_ = LifeBehavior.LIFE_STATE_INJURED
-    			--TODO 发送XX受伤事件
     		elseif object.campId_ == MONSTER_CAMP then
     			object.lifeState_ = LifeBehavior.LIFE_STATE_DEAD
-    			--TODO 发送XX死亡事件
+                print("object.lifeState_="..object.lifeState_)
     		end
         else
-        	if object.campId_ == PLAYER_CAMP then
-        		object.lifeState_ = LifeBehavior.LIFE_STATE_LIVE
-        		--TODO 发送XX伤愈事件
-        	end
+        	object.lifeState_ = LifeBehavior.LIFE_STATE_LIVE
+        end
+        if object.id_ == "monster:2" then
+            print("checkLifeState end object.lifeState_="..object.lifeState_)
         end
     end
     object:bindMethod(self, "checkLifeState", checkLifeState)
@@ -140,18 +155,17 @@ function LifeBehavior:bind(object)
     end
     object:bindMethod(self, "setHpVisible", setHpVisible)
 
-    local function fadeOut(object,time)
-        object.sprite_:fadeOut(time)
-        object.hpSprite_:fadeOut(time)
-        object.hpOutlineSprite_:fadeOut(time)
+    local function destroyed(object)
+        object.lifeState_ = LifeBehavior.LIFE_STATE_DESTROYED
     end
-    object:bindMethod(self, "fadeOut", fadeOut)
+    object:bindMethod(self, "destroyed", destroyed)
 
     self:reset(object)
 end
 
 function LifeBehavior:unbind(object)
 	object:unbindMethod(self, "isLive")
+    object:unbindMethod(self, "isDestroyed")
 	object:unbindMethod(self, "getMaxHp")
 	object:unbindMethod(self, "setMaxHp")
 	object:unbindMethod(self, "getHp")
@@ -164,7 +178,7 @@ function LifeBehavior:unbind(object)
 	object:unbindMethod(self, "updateView")
 	object:unbindMethod(self, "fastUpdateView")
 	object:unbindMethod(self, "setHpVisible")
-    object:unbindMethod(self, "fadeOut")
+    object:unbindMethod(self, "destroyed")
 	
 	self:reset(object)
 end
@@ -177,7 +191,6 @@ function LifeBehavior:reset(object)
     if object.maxHp_ < 1 then object.maxHp_ = 1 end
     object.hp_        = object.maxHp_
     object.lifeState_  = LifeBehavior.LIFE_STATE_LIVE
-    object.preLifeState_  = LifeBehavior.LIFE_STATE_DEAD
     object.hp__       = nil
 end
 
