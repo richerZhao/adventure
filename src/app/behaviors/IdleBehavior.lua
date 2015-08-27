@@ -44,6 +44,7 @@ function IdleBehavior:bind(object)
     object:bindMethod(self, "isIdle", isIdle)
 
     local function startIdle(object)
+        print(object.id_ .. " startIdle")
     	object.idleState_ = IdleBehavior.IDLE_STATE_START
     	local idleAnimation = display.newAnimation(object.idleFrames_[object.direction_],1/4)
 		object.idleAction_ = object.sprite_:playAnimationForever(idleAnimation)
@@ -51,6 +52,7 @@ function IdleBehavior:bind(object)
     object:bindMethod(self, "startIdle", startIdle)
 
     local function stopIdle(object)
+        print(object.id_ .. " stopIdle")
     	object.idleState_ = IdleBehavior.IDLE_STATE_STOPED
     	if object.idleAction_ then
     		object.sprite_:stopAction(object.idleAction_)

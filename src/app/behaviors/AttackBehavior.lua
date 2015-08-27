@@ -55,6 +55,7 @@ function AttackBehavior:bind(object)
     object:bindMethod(self, "isAttacking", isAttacking)
 
     local function startAttack(object)
+        print(object.id_ .. " startAttack")
     	object.attackState_ = AttackBehavior.ATTACK_STATE_START
     	-- local animation = display.newAnimation(object.attackFrames_[object.direction_],1/8)
     	-- object.attackAction_ = object.sprite_:playAnimationOnce(animation,false,function ()
@@ -67,6 +68,7 @@ function AttackBehavior:bind(object)
     object:bindMethod(self, "startAttack", startAttack)
 
     local function stopAttack(object)
+        print(object.id_ .. " stopAttack")
     	object.attackState_ = AttackBehavior.ATTACK_STATE_STOPED
     	object.enemy_ = nil
     	object.idleTime_ = 0

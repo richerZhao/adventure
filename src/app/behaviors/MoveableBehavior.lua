@@ -43,14 +43,24 @@ function MoveableBehavior:bind(object)
     end
 
 	local function isMoving(object)
-		if not object.paths_ then return false end
-		if not object.paths_[object.pathIndex_] then return false end
-		if object.moveState_ == MoveableBehavior.MOVING_STATE_STOPED then return false end
+		if not object.paths_ then 
+			return false 
+		end
+		if not object.paths_[object.pathIndex_] then 
+			dump(object.paths_, object.id_ .. " paths_", object.paths_)
+			dump(object.pathIndex_, object.id_ .. " pathIndex_", object.pathIndex_)
+			dump(object.paths_[object.pathIndex_], "object.paths_[object.pathIndex_]", object.paths_[object.pathIndex_])
+			return false 
+		end
+		if object.moveState_ == MoveableBehavior.MOVING_STATE_STOPED then 
+			return false 
+		end
 		return true
 	end
 	object:bindMethod(self, "isMoving", isMoving)
 
 	local function startMove(object)
+		print(object.id_ .. " startMove")
 		object.moveState_ = MoveableBehavior.MOVING_STATE_MOVED
 		if object:getDirection() > 0 then
 			local animation = display.newAnimation(object.moveFrames_[object.direction_],1/8)
@@ -61,6 +71,7 @@ function MoveableBehavior:bind(object)
 	object:bindMethod(self, "startMove", startMove)
 
 	local function stopMove(object)
+		print(object.id_ .. " stopMove")
 		object.moveState_ = MoveableBehavior.MOVING_STATE_STOPPED
 		object.paths_ = nil
 		object.pathIndex_ = 0

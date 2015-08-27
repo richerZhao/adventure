@@ -179,6 +179,10 @@ function Organism:removeMoveLock()
     self.moveLocked_    = self.moveLocked_ - 1
 end
 
+function Organism:isMoveLock()
+    return self.moveLocked_ > 0
+end
+
 function Organism:addAttackLock()
     self.fightLocked_   = self.fightLocked_ + 1
 end

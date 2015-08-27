@@ -41,7 +41,7 @@ function NpcBehavior:bind(object)
 			return
 		end
 
-		-- TODO 附近是否有敌人
+		-- 附近是否有敌人
 		if not object:isMoving() then 
 			if object.enemy_ then
 				object:setPath(object:searchPath(cc.p(object.enemy_:getPosition())))
@@ -77,6 +77,10 @@ function NpcBehavior:bind(object)
 	local function addListener(object)
 		--注册进入仇恨区事件
 		g_eventManager:addEventListener(MapEvent.OBJECT_IN_HATRED_RANGE,function(sender,target)
+			if sender.moveLocked_ > 0 or sender.fightLocked_ > 0 then
+				-- print(sender.id_ .. "locked.")
+				return
+			end
 			print("enemy "..target.id_ .. " enter object " .. sender.id_ .. " hatred range")
 			sender:setEnemy(target)
 			sender:setPath(sender:searchPath(cc.p(target:getPosition())))
@@ -84,6 +88,10 @@ function NpcBehavior:bind(object)
 			end,object)
 		--注册进入可攻击范围事件
 		g_eventManager:addEventListener(MapEvent.OBJECT_IN_ATTACK_RANGE,function(sender,target)
+			if sender.fightLocked_ > 0 then
+				-- print(sender.id_ .. "locked.")
+				return
+			end
 			print("enemy "..target.id_ .. " enter object " .. sender.id_ .. " attack range")
 			object:stopAllAIActions()
 			object:startAttack()
@@ -94,6 +102,7 @@ function NpcBehavior:bind(object)
 	object:bindMethod(self, "addListener", addListener)
 
 	local function stopAllAIActions(object)
+		print(object.id_ .. " stopAllAIActions")
 		if object:isAttacking() then
 			object:stopAttack()
 		end

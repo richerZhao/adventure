@@ -34,7 +34,11 @@ function MonsterBehavior:bind(object)
 			end
 		end
 		
+
 		local target = object.activityRange[math.random(#object.activityRange)]
+		while target.x == object.genPoint_.x and target.y == object.genPoint_.y do
+			target = object.activityRange[math.random(#object.activityRange)]
+		end
 		object:setPath(object:searchPath(cc.p(object.map_:convertTileToMapPosition(target))))
 		object:startMove()
 		object.map_:addMonster(object.areaName_)
@@ -51,10 +55,15 @@ function MonsterBehavior:bind(object)
 		if object:isAttacking() then
 			return
 		end
-		-- TODO 附近是否有敌人
+		-- 附近是否有敌人
 		if not object:isMoving() then 
 			if object.enemy_ then
-				object:setPath(object:searchPath(cc.p(object.enemy_:getPosition())))
+				-- print(object.id_.." not move!")
+				-- dump(object.enemy_, "object.enemy_", object.enemy_)
+				object:stopAllAIActions()
+				local enemyPath = object:searchPath(cc.p(object.enemy_:getPosition()))
+				object:setPath({enemyPath[1]})
+				print(object.id_.." has an enemy!")
 				object:startMove()
 				return
 			end
@@ -72,9 +81,13 @@ function MonsterBehavior:bind(object)
 				local paths
 				while not paths do
 					target = object.activityRange[math.random(#object.activityRange)]
+					while target.x == object.genPoint_.x and target.y == object.genPoint_.y do
+						target = object.activityRange[math.random(#object.activityRange)]
+					end
 					paths = object:searchPath(cc.p(object.map_:convertTileToMapPosition(target)))
 				end
 				object:setPath(paths)
+				print(object.id_.." object:isIdle()!")
 				object:startMove()
 			end
 		end
@@ -86,23 +99,34 @@ function MonsterBehavior:bind(object)
 	local function addListener(object)
 		--注册进入仇恨区事件
 		g_eventManager:addEventListener(MapEvent.OBJECT_IN_HATRED_RANGE,function(sender,target)
+			if sender.moveLocked_ > 0 or sender.fightLocked_ > 0 then
+				-- print(sender.id_ .. "locked.")
+				return
+			end
 			print("enemy "..target.id_ .. " enter object " .. sender.id_ .. " hatred range")
-			sender:setEnemy(target)
-			sender:setPath(sender:searchPath(cc.p(target:getPosition())))
 			sender:addMoveLock()
+			sender:setEnemy(target)
+			local enemyPath = sender:searchPath(cc.p(target:getPosition()))
+			object:setPath({enemyPath[1]})
+			-- sender:setPath(sender:searchPath(cc.p(target:getPosition())))
 			end,object)
 		--注册进入可攻击范围事件
 		g_eventManager:addEventListener(MapEvent.OBJECT_IN_ATTACK_RANGE,function(sender,target)
+			if sender.fightLocked_ > 0 then
+				-- print(sender.id_ .. "locked.")
+				return
+			end
+			sender:removeMoveLock()
+			sender:addAttackLock()
 			print("enemy "..target.id_ .. " enter object " .. sender.id_ .. " attack range")
 			object:stopAllAIActions()
 			object:startAttack()
-			sender:removeMoveLock()
-			sender:addAttackLock()
 			end,object)
 	end
 	object:bindMethod(self, "addListener", addListener)
 
 	local function stopAllAIActions(object)
+		print(object.id_ .. " stopAllAIActions")
 		if object:isAttacking() then
 			object:stopAttack()
 		end
