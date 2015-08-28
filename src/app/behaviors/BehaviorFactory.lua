@@ -8,6 +8,7 @@ local behaviorsClass = {
     SearchPathBehavior        = require("app.behaviors.SearchPathBehavior"),
     NpcBehavior               = require("app.behaviors.NpcBehavior"),
     MonsterBehavior           = require("app.behaviors.MonsterBehavior"),
+    CureBehavior              = require("app.behaviors.CureBehavior"),
     -- CampBehavior               = require("game.map.behaviors.CampBehavior"),
     -- DecorateBehavior           = require("game.map.behaviors.DecorateBehavior"),
     -- BuildingBehavior           = require("game.map.behaviors.BuildingBehavior"),

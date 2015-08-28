@@ -25,6 +25,11 @@ function LifeBehavior:bind(object)
     end
     object:bindMethod(self, "isDestroyed", isDestroyed)
 
+    local function isInjured(object)
+        return object.lifeState_ == LifeBehavior.LIFE_STATE_INJURED
+    end
+    object:bindMethod(self, "isInjured", isInjured)
+
 	local function getMaxHp(object)
         return object.maxHp_
     end
@@ -73,6 +78,9 @@ function LifeBehavior:bind(object)
         if object.hp_ + amount >= object.maxHp_ then
             trueCure = object.maxHp_ - object.hp_
             object.hp_ = object.maxHp_
+            if object:isInjured() then
+                
+            end
         else
             object.hp_ = object.hp_ + amount
         end
@@ -82,21 +90,18 @@ function LifeBehavior:bind(object)
     object:bindMethod(self, "increaseHp", increaseHp)
 
     local function checkLifeState(object)
-        if object.id_ == "monster:2" then
-            print("checkLifeState start object.lifeState_="..object.lifeState_)
+        if object:isInjured() then
+            return
         end
+
     	if object.hp_ <= 0 then
     		if object.campId_ == PLAYER_CAMP then
     			object.lifeState_ = LifeBehavior.LIFE_STATE_INJURED
     		elseif object.campId_ == MONSTER_CAMP then
     			object.lifeState_ = LifeBehavior.LIFE_STATE_DEAD
-                print("object.lifeState_="..object.lifeState_)
     		end
         else
         	object.lifeState_ = LifeBehavior.LIFE_STATE_LIVE
-        end
-        if object.id_ == "monster:2" then
-            print("checkLifeState end object.lifeState_="..object.lifeState_)
         end
     end
     object:bindMethod(self, "checkLifeState", checkLifeState)
@@ -166,6 +171,7 @@ end
 function LifeBehavior:unbind(object)
 	object:unbindMethod(self, "isLive")
     object:unbindMethod(self, "isDestroyed")
+    object:unbindMethod(self, "isInjured")
 	object:unbindMethod(self, "getMaxHp")
 	object:unbindMethod(self, "setMaxHp")
 	object:unbindMethod(self, "getHp")

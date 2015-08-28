@@ -66,6 +66,7 @@ function MapRuntime:startPlay()
             object:addListener()
         end
         object:startPlay()
+        print(object.id_.." startRunAI0")
         object:startRunAI()
         object.updated__ = true
     end
@@ -172,6 +173,8 @@ function MapRuntime:tickCollider(objects, dt)
             local x1, y1 = obj1.x_ , obj1.y_
             local campId1 = obj1.campId_
             dists[obj1] = {}
+
+            if not obj1:isLive() then break end
 
             for id2, obj2 in pairs(objects) do
                 while true do

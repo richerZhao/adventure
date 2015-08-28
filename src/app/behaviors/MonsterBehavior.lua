@@ -40,6 +40,7 @@ function MonsterBehavior:bind(object)
 			target = object.activityRange[math.random(#object.activityRange)]
 		end
 		object:setPath(object:searchPath(cc.p(object.map_:convertTileToMapPosition(target))))
+		print(object.id_.." start move0")
 		object:startMove()
 		object.map_:addMonster(object.areaName_)
 	end
@@ -58,12 +59,10 @@ function MonsterBehavior:bind(object)
 		-- 附近是否有敌人
 		if not object:isMoving() then 
 			if object.enemy_ then
-				-- print(object.id_.." not move!")
-				-- dump(object.enemy_, "object.enemy_", object.enemy_)
 				object:stopAllAIActions()
 				local enemyPath = object:searchPath(cc.p(object.enemy_:getPosition()))
+				print(object.id_.." start move1")
 				object:setPath({enemyPath[1]})
-				print(object.id_.." has an enemy!")
 				object:startMove()
 				return
 			end
@@ -87,7 +86,7 @@ function MonsterBehavior:bind(object)
 					paths = object:searchPath(cc.p(object.map_:convertTileToMapPosition(target)))
 				end
 				object:setPath(paths)
-				print(object.id_.." object:isIdle()!")
+				print(object.id_.." start move2")
 				object:startMove()
 			end
 		end
@@ -100,27 +99,27 @@ function MonsterBehavior:bind(object)
 		--注册进入仇恨区事件
 		g_eventManager:addEventListener(MapEvent.OBJECT_IN_HATRED_RANGE,function(sender,target)
 			if sender.moveLocked_ > 0 or sender.fightLocked_ > 0 then
-				-- print(sender.id_ .. "locked.")
 				return
 			end
 			print("enemy "..target.id_ .. " enter object " .. sender.id_ .. " hatred range")
 			sender:addMoveLock()
 			sender:setEnemy(target)
+			sender:stopAllAIActions()
 			local enemyPath = sender:searchPath(cc.p(target:getPosition()))
-			object:setPath({enemyPath[1]})
-			-- sender:setPath(sender:searchPath(cc.p(target:getPosition())))
+			sender:setPath({enemyPath[1]})
+			print(object.id_.." start move3")
+			sender:startMove()
 			end,object)
 		--注册进入可攻击范围事件
 		g_eventManager:addEventListener(MapEvent.OBJECT_IN_ATTACK_RANGE,function(sender,target)
 			if sender.fightLocked_ > 0 then
-				-- print(sender.id_ .. "locked.")
 				return
 			end
 			sender:removeMoveLock()
 			sender:addAttackLock()
 			print("enemy "..target.id_ .. " enter object " .. sender.id_ .. " attack range")
-			object:stopAllAIActions()
-			object:startAttack()
+			sender:stopAllAIActions()
+			sender:startAttack()
 			end,object)
 	end
 	object:bindMethod(self, "addListener", addListener)
@@ -141,14 +140,14 @@ function MonsterBehavior:bind(object)
 	end
 	object:bindMethod(self, "stopAllAIActions", stopAllAIActions)
 
-	local function showDestroyedStatus(object,skipAnim,callback)
+	local function showDestroyedStatus(object,skipAnim)
         if skipAnim then
             object:getView():setVisible(false)
-            callback(object)
+            object:destroyed()
         else
             transition.execute(object:getView(), cca.fadeOut(1), {  
                 onComplete = function()
-                    callback()
+                    object:destroyed()
                 end,
                 time = 1,
             })  

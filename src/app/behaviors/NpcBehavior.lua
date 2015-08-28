@@ -6,7 +6,7 @@ NpcBehavior.AI_STATE_STOP = 0
 NpcBehavior.AI_STATE_RUN = 1
 
 function NpcBehavior:ctor()
-	NpcBehavior.super.ctor(self,"NpcBehavior",{"AttackBehavior","MoveableBehavior","SearchPathBehavior"},3)
+	NpcBehavior.super.ctor(self,"NpcBehavior",{"AttackBehavior","MoveableBehavior","SearchPathBehavior","CureBehavior"},3)
 end
 
 function NpcBehavior:bind(object)
@@ -38,6 +38,10 @@ function NpcBehavior:bind(object)
 	local function tick(object,dt)
 		if not object.play_ or not object:isAIRun() then return end
 		if object:isAttacking() then
+			return
+		end
+
+		if object:isInjured() then
 			return
 		end
 
@@ -78,25 +82,25 @@ function NpcBehavior:bind(object)
 		--注册进入仇恨区事件
 		g_eventManager:addEventListener(MapEvent.OBJECT_IN_HATRED_RANGE,function(sender,target)
 			if sender.moveLocked_ > 0 or sender.fightLocked_ > 0 then
-				-- print(sender.id_ .. "locked.")
 				return
 			end
+			sender:addMoveLock()
 			print("enemy "..target.id_ .. " enter object " .. sender.id_ .. " hatred range")
+			sender:stopAllAIActions()
 			sender:setEnemy(target)
 			sender:setPath(sender:searchPath(cc.p(target:getPosition())))
-			sender:addMoveLock()
+			sender:startMove()
 			end,object)
 		--注册进入可攻击范围事件
 		g_eventManager:addEventListener(MapEvent.OBJECT_IN_ATTACK_RANGE,function(sender,target)
 			if sender.fightLocked_ > 0 then
-				-- print(sender.id_ .. "locked.")
 				return
 			end
-			print("enemy "..target.id_ .. " enter object " .. sender.id_ .. " attack range")
-			object:stopAllAIActions()
-			object:startAttack()
 			sender:removeMoveLock()
 			sender:addAttackLock()
+			print("enemy "..target.id_ .. " enter object " .. sender.id_ .. " attack range")
+			sender:stopAllAIActions()
+			sender:startAttack()
 			end,object)
 	end
 	object:bindMethod(self, "addListener", addListener)
@@ -117,9 +121,10 @@ function NpcBehavior:bind(object)
 	end
 	object:bindMethod(self, "stopAllAIActions", stopAllAIActions)
 
-	local function showDestroyedStatus(object,skipAnim,callback)
+	local function showDestroyedStatus(object,skipAnim)
         if skipAnim then
             object:getView():setVisible(false)
+            object:
             callback(object)
         else
             transition.execute(object:getView(), cca.fadeOut(1), {  

@@ -13,9 +13,7 @@ function FightEventHandler:addListener()
 	g_eventManager:addEventListener(MapEvent.EVENT_MONSTER_DEAD,function(sender,attacker,target)
 		print("attacker ".. attacker.id_.." kill monster ".. target.id_)
 		target:stopAllAIActions()
-		target:showDestroyedStatus(false,function()
-				target:destroyed()
-			end)
+		target:showDestroyedStatus(false)
 			end,self)
 
 	--监听忍者对怪物造成的伤害
@@ -58,6 +56,7 @@ function FightEventHandler:tick(dt)
 				                end
 				            end
 				    		--完成攻击后切换状态,空闲或者停止
+				    		-- object:stopAttack()
 				    		object.attackState_ = AttackBehavior.ATTACK_STATE_IDLE
 				    		object.attackAction_ = nil
 				    		object:startIdle()
