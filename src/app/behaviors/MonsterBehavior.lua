@@ -26,8 +26,8 @@ function MonsterBehavior:bind(object)
 		object.genPoint_ = p
 		object.areaName_ = areaName
 		object:setPosition(object.map_:convertTileToMapPosition(p))
-		for i=p.x-3,p.x+3 do
-			for k=p.y-3,p.y+3 do
+		for i=p.x-1,p.x+1 do
+			for k=p.y-1,p.y+1 do
 				if object.map_:canReach_(cc.p(i,k)) then
 					table.insert(object.activityRange,cc.p(i,k))
 				end

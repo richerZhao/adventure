@@ -21,6 +21,14 @@ function FightEventHandler:addListener()
 		print("attacker ".. attacker.id_.." hit enemy ".. target.id_ .. " " .. damage .. " damage")
 
 			end,self)
+
+	--监听NPC受伤事件
+	g_eventManager:addEventListener(MapEvent.EVENT_NINJA_HURT,function(sender,attacker,target)
+		print("attacker ".. attacker.id_.." kill monster ".. target.id_)
+		target:stopAllAIActions()
+		target:removeAttackLock()
+		target:startCure()
+			end,self)
 end
 
 -- 轮询
@@ -47,6 +55,10 @@ function FightEventHandler:tick(dt)
 				                		if object:getCampId() == PLAYER_CAMP then
 				                			--TODO 发送XX击杀了XXmonster
 				                			g_eventManager:dispatchEvent(MapEvent.EVENT_MONSTER_DEAD, self, object,object.enemy_)
+				                			object:removeAttackLock()
+				                			object.enemy_:removeAttackLock()
+				                		elseif object:getCampId() == MONSTER_CAMP then
+				                			g_eventManager:dispatchEvent(MapEvent.EVENT_NINJA_HURT, self, object,object.enemy_)
 				                			object:removeAttackLock()
 				                		end
 				                		print("object ".. object.id_ .. " kill enemy " .. object.enemy_.id_)

@@ -1,5 +1,6 @@
 local BehaviorBase = require("app.behaviors.BehaviorBase")
 local MapConstants  = require("app.MapConstants")
+local MapEvent = require("app.MapEvent")
 local LifeBehavior = class("LifeBehavior",BehaviorBase)
 
 
@@ -79,7 +80,7 @@ function LifeBehavior:bind(object)
             trueCure = object.maxHp_ - object.hp_
             object.hp_ = object.maxHp_
             if object:isInjured() then
-                
+                g_eventManager:dispatchEvent(MapEvent.EVENT_NINJA_CURE, object)
             end
         else
             object.hp_ = object.hp_ + amount

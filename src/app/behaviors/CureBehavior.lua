@@ -1,5 +1,6 @@
 local BehaviorBase = require("app.behaviors.BehaviorBase")
 local MapEvent = require("app.MapEvent")
+local LifeBehavior = require("app.behaviors.LifeBehavior")
 local CureBehavior = class("CureBehavior",BehaviorBase)
 
 function CureBehavior:ctor()
@@ -7,11 +8,11 @@ function CureBehavior:ctor()
 end
 
 function CureBehavior:bind(object)
-	object.cureAction_				 	= nil	--攻击动作
+	object.cureAction_				 	= nil	--自愈动作
 	object.cureFrames_					= nil	--动画
 	object.cureTime_					= checkint(object.state_.cureTime)	--治愈时间
 
-	--初始化移动动作
+	--初始化自愈动作
 	object.cureFrames_ = {}
 	local cureFrames = display.newFrames(object.modelName_ .. "_dance_a_2_%02d.png",1,8)
 	for i=1,4 do
@@ -56,6 +57,8 @@ end
 function CureBehavior:unbind(object)
 	object:unbindMethod(self, "startCure")
 	object:unbindMethod(self, "stopCure")
+	object:unbindMethod(self, "tick")
+	object:unbindMethod(self, "addListener")
 end
 
 function CureBehavior:reset(object)

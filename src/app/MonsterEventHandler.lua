@@ -3,7 +3,7 @@ local MapEvent = require("app.MapEvent")
 local MonsterEventHandler = class("MonsterEventHandler",MapEventHandler)
 
 MONSTER_GEN_DURATION = 3  --多久生成一个怪物
-MONSTER_RATE 		 = 1   --玩家的数量的倍数
+MONSTER_RATE 		 = 2   --玩家的数量的倍数
 MONSTER_SEQ 		 = 1      
 
 
